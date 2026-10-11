@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Models;
+
+use App\Notifications\PenjagaAkaunNotification;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+
+class Penjaga extends Model
+{
+    protected $table = 'penjaga';
+
+    protected $fillable = [
+        'user_id',
+        'nama',
+        'no_kp',
+        'no_telefon',
+        'email',
+        'alamat',
+        'hubungan',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function anak(): HasMany
+    {
+        return $this->hasMany(Pelajar::class, 'penjaga_id');
+    }
+
+    /**
+     * Cipta (atau reset) akaun portal untuk penjaga ini, hantar emel berisi
+     * kata laluan sementara, dan pulangkan kata laluan itu (untuk paparan sekali).
+     */
+    public function ciptaAtauResetAkaun(string $email): string
+    {
+        $kataLaluanBaharu = Str::password(10);
+
+        if ($this->user_id) {
+            $user = User::findOrFail($this->user_id);
+            $user->update([
+                'email' => $email,
+                'password' => Hash::make($kataLaluanBaharu),
+            ]);
+        } else {
+            $user = User::create([
+                'name' => $this->nama,
+                'email' => $email,
+                'password' => Hash::make($kataLaluanBaharu),
+                'phone' => $this->no_telefon,
+                'email_verified_at' => now(),
+            ]);
+            $user->assignRole('Penjaga');
+
+            $this->update(['user_id' => $user->id]);
+        }
+
+        $this->update(['email' => $email]);
+
+        $user->notify(new PenjagaAkaunNotification($this, $email, $kataLaluanBaharu));
+
+        return $kataLaluanBaharu;
+    }
+}
