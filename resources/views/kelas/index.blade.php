@@ -32,7 +32,9 @@
                             <x-th-sortable lajur="sesi" :urut-semasa="$urut" :arah-semasa="$arah">Sesi</x-th-sortable>
                             <th class="border border-gray-200 px-6 py-2 text-left text-sm font-medium text-gray-500">Bil. Pelajar</th>
                             <x-th-sortable lajur="status" :urut-semasa="$urut" :arah-semasa="$arah">Status</x-th-sortable>
-                            <th class="border border-gray-200 px-6 py-2 text-center text-sm font-medium text-gray-500">Tindakan</th>
+                            @role('Admin')
+                                <th class="border border-gray-200 px-6 py-2 text-center text-sm font-medium text-gray-500">Tindakan</th>
+                            @endrole
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -47,18 +49,20 @@
                                         {{ $item->status }}
                                     </span>
                                 </td>
-                                <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-center text-sm space-x-1">
-                                    <a href="{{ route('kelas.edit', $item) }}" class="inline-flex items-center rounded-md bg-gray-800 px-3 py-1 text-sm font-small text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Kemaskini</a>
-                                    <form action="{{ route('kelas.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Padam kelas ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-1 text-sm font-small text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Padam</button>
-                                    </form>
-                                </td>
+                                @role('Admin')
+                                    <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-center text-sm space-x-1">
+                                        <a href="{{ route('kelas.edit', $item) }}" class="inline-flex items-center rounded-md bg-gray-800 px-3 py-1 text-sm font-small text-white hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">Kemaskini</a>
+                                        <form action="{{ route('kelas.destroy', $item) }}" method="POST" class="inline" onsubmit="return confirm('Padam kelas ini?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center rounded-md bg-red-600 px-3 py-1 text-sm font-small text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">Padam</button>
+                                        </form>
+                                    </td>
+                                @endrole
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Tiada kelas didaftarkan lagi.</td>
+                                <td colspan="{{ auth()->user()->hasRole('Admin') ? 6 : 5 }}" class="px-6 py-4 text-center text-sm text-gray-500">Tiada kelas didaftarkan lagi.</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -29,7 +29,7 @@
                                     @php
                                         $itemBolehPilih = $item['baki'] > 0;
                                         $warna = match ($item['status']) {
-                                            'Lunas' => 'bg-green-100 text-green-800',
+                                            'Dibayar' => 'bg-green-100 text-green-800',
                                             'Sebahagian' => 'bg-yellow-100 text-yellow-800',
                                             default => 'bg-red-100 text-red-800',
                                         };
@@ -49,7 +49,7 @@
                                         </div>
 
                                         <span class="px-2 py-1 text-xs rounded-full {{ $warna }}">
-                                            {{ $item['status'] === 'Lunas' ? 'Sudah Bayar' : $item['status'] }}
+                                            {{ $item['status'] }}
                                         </span>
 
                                         <span class="text-sm font-semibold w-20 text-right">
@@ -66,7 +66,7 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-3 pt-4">
-                            <a href="{{ route('portal.index') }}" class="text-sm text-gray-600 hover:underline">Kembali</a>
+                            <a href="{{ route('portal.index') }}" class="text-sm text-gray-600">Kembali</a>
                             <button type="submit" id="btn-bayar" class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-700 opacity-50" disabled>
                                 Semak Sebelum Bayar &rarr;
                             </button>

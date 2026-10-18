@@ -26,6 +26,7 @@
                 <x-text-input type="text" name="nama" placeholder="Cari nama guru..." value="{{ request('nama') }}" class="flex-1" />
                 <button type="submit" class="px-4 py-2 bg-green-600 text-white text-sm rounded-md">Cari</button>
             </form>
+            <p class="text-xs text-gray-400">Nota: untuk reset kata laluan guru yang sudah ada akaun, guna menu Pengurusan Pengguna.</p>
         </div>
         <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="overflow-x-auto">
@@ -91,8 +92,6 @@
                                             <button type="submit" class="px-3 py-1 bg-green-600 text-white text-xs rounded-md">Sahkan</button>
                                         </form>
                                     </div>
-                                @else
-                                    <p class="mt-1 text-xs text-gray-400">Reset kata laluan: guna menu Pengurusan Pengguna.</p>
                                 @endif
                             </td>
                         </tr>

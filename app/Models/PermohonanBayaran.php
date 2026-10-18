@@ -12,6 +12,8 @@ class PermohonanBayaran extends Model
     protected $fillable = [
         'guru_id',
         'pelajar_id',
+        'struktur_yuran_id',
+        'bulan',
         'amaun',
         'catatan',
         'tarikh_terima',
@@ -37,6 +39,11 @@ class PermohonanBayaran extends Model
     public function pelajar(): BelongsTo
     {
         return $this->belongsTo(Pelajar::class, 'pelajar_id');
+    }
+
+    public function strukturYuran(): BelongsTo
+    {
+        return $this->belongsTo(StrukturYuran::class, 'struktur_yuran_id');
     }
 
     public function bayaran(): BelongsTo

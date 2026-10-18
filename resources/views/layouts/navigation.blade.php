@@ -60,7 +60,7 @@
         </div>
     </div>
 
-    <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+    <nav class="flex-1 min-h-0 overflow-y-auto px-3 py-4 space-y-1">
 
         @role('Penjaga')
             <a href="{{ route('portal.index') }}"
@@ -111,7 +111,7 @@
             <a href="{{ route('dashboard') }}"
             class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium
                 {{ request()->routeIs('dashboard') || request()->routeIs('dashboard.*') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">
-                <i class="fas fa-house fa-fw"></i> {{ __('Papan Pemuka') }}
+                <i class="fas fa-house fa-fw"></i> {{ __('Halaman Utama') }}
             </a>
         @endhasanyrole
 
@@ -193,10 +193,6 @@
                     <a href="{{ route('bayaran.index') }}"
                        class="block px-3 py-1.5 rounded-md text-sm {{ request()->routeIs('bayaran.*') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">
                         {{ __('Bayaran') }}
-                    </a>
-                    <a href="{{ route('baki-tertunggak.index') }}"
-                       class="block px-3 py-1.5 rounded-md text-sm {{ request()->routeIs('baki-tertunggak.*') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">
-                        {{ __('Baki Belum Dibayar') }}
                     </a>
                     <a href="{{ route('permohonan-bayaran.index') }}"
                        class="block px-3 py-1.5 rounded-md text-sm {{ request()->routeIs('permohonan-bayaran.*') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">

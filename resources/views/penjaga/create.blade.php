@@ -50,7 +50,7 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-3 pt-4">
-                        <a href="{{ route('penjaga.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                        <a href="{{ route('penjaga.index') }}" class="text-sm text-gray-600">Batal</a>
                         <x-primary-button>Simpan</x-primary-button>
                     </div>
                 </form>

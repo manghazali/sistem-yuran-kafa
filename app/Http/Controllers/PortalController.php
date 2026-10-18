@@ -96,7 +96,7 @@ class PortalController extends Controller
 
         return match ($urut) {
             'anak' => $items->sortBy(fn ($i) => $i['pelajar']->nama, SORT_REGULAR, $menurun),
-            'amaun' => $items->sortBy(fn ($i) => $i['status'] === 'Lunas' ? $i['amaun'] : $i['baki'], SORT_REGULAR, $menurun),
+            'amaun' => $items->sortBy(fn ($i) => $i['status'] === 'Dibayar' ? $i['amaun'] : $i['baki'], SORT_REGULAR, $menurun),
             default => $items->sortBy($urut, SORT_REGULAR, $menurun),
         };
     }
@@ -123,7 +123,7 @@ class PortalController extends Controller
 
         $senaraiItem = $this->paginateKoleksi(
             $this->urutkanItemYuran(
-                $this->semuaItemYuran()->filter(fn ($item) => $item['status'] !== 'Lunas')->values(),
+                $this->semuaItemYuran()->filter(fn ($item) => $item['status'] !== 'Dibayar')->values(),
                 $request
             )->values()
         );

@@ -63,7 +63,11 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('pengguna', PenggunaController::class)->except(['show'])->middleware('role:Admin');
     Route::post('/pengguna/{pengguna}/reset-kata-laluan', [PenggunaController::class, 'resetKataLaluan'])->middleware('role:Admin')->name('pengguna.reset-kata-laluan');
-    Route::resource('kelas', KelasController::class)->parameters(['kelas' => 'kelas'])->except('destroy')->middleware('role:Admin,Guru');
+    // Guru boleh lihat/tambah Kelas, tapi KEMASKINI dan PADAM khusus Admin
+    // sahaja.
+    Route::resource('kelas', KelasController::class)->parameters(['kelas' => 'kelas'])->except(['destroy', 'edit', 'update'])->middleware('role:Admin,Guru');
+    Route::get('/kelas/{kelas}/edit', [KelasController::class, 'edit'])->middleware('role:Admin')->name('kelas.edit');
+    Route::match(['put', 'patch'], '/kelas/{kelas}', [KelasController::class, 'update'])->middleware('role:Admin')->name('kelas.update');
     Route::delete('/kelas/{kelas}', [KelasController::class, 'destroy'])->middleware('role:Admin')->name('kelas.destroy');
 
     Route::middleware('role:Admin,Guru')->group(function () {
@@ -71,7 +75,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/pelajar-import', [PelajarController::class, 'importStore'])->name('pelajar.import.store');
         Route::get('/pelajar-import/template', [PelajarController::class, 'importTemplate'])->name('pelajar.import.template');
     });
-    Route::resource('pelajar', PelajarController::class)->except('destroy')->middleware('role:Admin,Guru');
+    // Guru boleh lihat/tambah Pelajar, tapi KEMASKINI dan PADAM khusus
+    // Admin sahaja.
+    Route::resource('pelajar', PelajarController::class)->except(['destroy', 'edit', 'update'])->middleware('role:Admin,Guru');
+    Route::get('/pelajar/{pelajar}/edit', [PelajarController::class, 'edit'])->middleware('role:Admin')->name('pelajar.edit');
+    Route::match(['put', 'patch'], '/pelajar/{pelajar}', [PelajarController::class, 'update'])->middleware('role:Admin')->name('pelajar.update');
     Route::delete('/pelajar/{pelajar}', [PelajarController::class, 'destroy'])->middleware('role:Admin')->name('pelajar.destroy');
     Route::get('/naik-darjah', [NaikDarjahController::class, 'index'])->middleware('role:Admin')->name('naik-darjah.index');
     Route::post('/naik-darjah', [NaikDarjahController::class, 'store'])->middleware('role:Admin')->name('naik-darjah.store');
@@ -85,6 +93,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('tetapan-yuran-pelajar', TetapanYuranPelajarController::class)->middleware('role:Admin,Akauntan');
 
     Route::get('/baki-tertunggak', [BakiTertunggakController::class, 'index'])->middleware('role:Admin,Akauntan')->name('baki-tertunggak.index');
+    Route::get('/baki-tertunggak/csv', [BakiTertunggakController::class, 'csv'])->middleware('role:Admin,Akauntan')->name('baki-tertunggak.csv');
+    Route::get('/baki-tertunggak/pdf', [BakiTertunggakController::class, 'pdf'])->middleware('role:Admin,Akauntan')->name('baki-tertunggak.pdf');
 
     Route::resource('bayaran', BayaranController::class)->only(['index', 'create', 'store', 'show', 'destroy'])->middleware('role:Admin,Akauntan');
     Route::get('/resit/{bayaran}', [ResitController::class, 'show'])->middleware('role:Admin,Akauntan,Penjaga')->name('resit.show');
@@ -114,6 +124,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('role:Admin,Akauntan')->name('laporan.index');
     Route::get('/laporan/kutipan', [LaporanController::class, 'kutipan'])->middleware('role:Admin,Akauntan')->name('laporan.kutipan');
     Route::get('/laporan/kutipan/csv', [LaporanController::class, 'kutipanCsv'])->middleware('role:Admin,Akauntan')->name('laporan.kutipan.csv');
+    Route::get('/laporan/kutipan/pdf', [LaporanController::class, 'kutipanPdf'])->middleware('role:Admin,Akauntan')->name('laporan.kutipan.pdf');
 
     Route::get('/log-audit', [LogAuditController::class, 'index'])->middleware('role:Admin')->name('log-audit.index');
 

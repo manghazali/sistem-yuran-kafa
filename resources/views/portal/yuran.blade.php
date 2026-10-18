@@ -20,7 +20,7 @@
                     @forelse ($senaraiItem as $item)
                         @php
                             $warna = match ($item['status']) {
-                                'Lunas' => 'bg-green-100 text-green-800',
+                                'Dibayar' => 'bg-green-100 text-green-800',
                                 'Sebahagian' => 'bg-yellow-100 text-yellow-800',
                                 default => 'bg-red-100 text-red-800',
                             };
@@ -31,11 +31,11 @@
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">{{ $item['nama'] }}</td>
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">
                                 <span class="px-2 py-1 text-xs rounded-full {{ $warna }}">
-                                    {{ $item['status'] === 'Lunas' ? 'Sudah Bayar' : $item['status'] }}
+                                    {{ $item['status'] }}
                                 </span>
                             </td>
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-right text-sm font-medium">
-                                RM{{ number_format($item['status'] === 'Lunas' ? $item['amaun'] : $item['baki'], 2) }}
+                                RM{{ number_format($item['status'] === 'Dibayar' ? $item['amaun'] : $item['baki'], 2) }}
                             </td>
                         </tr>
                     @empty

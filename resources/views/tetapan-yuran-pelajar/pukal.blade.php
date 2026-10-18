@@ -5,7 +5,7 @@
 
     <div class="py-2">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <p class="text-sm text-gray-600 mb-4">
                     {{ __('Tetapkan satu struktur yuran kepada semua pelajar aktif sekali gus, atau tapis kepada kelas / darjah tertentu sahaja. Pelajar yang sudah ada struktur yuran ini akan dilangkau secara automatik.') }}
                 </p>
@@ -55,13 +55,6 @@
                     <p class="text-xs text-gray-500 -mt-2">{{ __('cth: pilih Tahun 5 untuk hanya tetapkan yuran UPPK kepada pelajar Tahun 5 sahaja.') }}</p>
 
                     <div>
-                        <x-input-label for="amaun_verride" value="Amaun Diselaraskan (RM) — pilihan" />
-                        <x-text-input id="amaun_verride" name="amaun_verride" type="number" step="0.01" min="0" class="mt-1 block w-full" value="{{ old('amaun_verride') }}" />
-                        <p class="text-xs text-gray-500 mt-1">Biar kosong untuk guna amaun standard struktur yuran.</p>
-                        <x-input-error :messages="$errors->get('amaun_verride')" class="mt-2" />
-                    </div>
-
-                    <div>
                         <x-input-label for="status" value="Status" />
                         <x-select id="status" name="status" class="mt-1 block w-full">
                             <option value="Aktif" selected>Aktif</option>
@@ -71,7 +64,7 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-3 pt-4">
-                        <a href="{{ route('tetapan-yuran-pelajar.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                        <a href="{{ route('tetapan-yuran-pelajar.index') }}" class="text-sm text-gray-600">Batal</a>
                         <x-primary-button>Pratonton &rarr;</x-primary-button>
                     </div>
                 </form>

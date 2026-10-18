@@ -19,8 +19,8 @@
             </div>
         </div>
 
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-            <p class="text-sm text-gray-500">Jumlah Keseluruhan Baki Belum Dibayar</p>
+        <div class="overflow-hidden shadow-sm sm:rounded-lg p-6 border {{ $jumlahKeseluruhanBaki > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200' }}">
+            <p class="text-sm text-gray-600">Jumlah Keseluruhan Baki Belum Dibayar</p>
             <p class="text-3xl font-bold {{ $jumlahKeseluruhanBaki > 0 ? 'text-red-600' : 'text-green-600' }}">
                 RM{{ number_format($jumlahKeseluruhanBaki, 2) }}
             </p>
@@ -30,12 +30,12 @@
             <h3 class="text-lg font-medium text-gray-800 mb-3">Anak-Anak Anda</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 @forelse ($ringkasan as $data)
-                    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-5">
+                    <div class="overflow-hidden shadow-sm sm:rounded-lg p-5 border {{ $data['jumlah_baki'] > 0 ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200' }}">
                         <p class="font-semibold">{{ $data['pelajar']->nama }}</p>
-                        <p class="text-sm text-gray-500">Tahun: {{ $data['pelajar']->darjah ?? '-' }}</p>
-                        <p class="text-sm text-gray-500">Kelas: {{ $data['pelajar']->kelas->nama_kelas ?? '-' }}</p>
+                        <p class="text-sm text-gray-600">Tahun: {{ $data['pelajar']->darjah ?? '-' }}</p>
+                        <p class="text-sm text-gray-600">Kelas: {{ $data['pelajar']->kelas->nama_kelas ?? '-' }}</p>
 
-                        <div class="mt-3 pt-3 border-t flex justify-between items-center">
+                        <div class="mt-3 pt-3 border-t {{ $data['jumlah_baki'] > 0 ? 'border-red-200' : 'border-green-200' }} flex justify-between items-center">
                             <div>
                                 <p class="text-xs text-gray-500">Baki Belum Dibayar</p>
                                 <p class="font-bold {{ $data['jumlah_baki'] > 0 ? 'text-red-600' : 'text-green-600' }}">
@@ -51,10 +51,6 @@
                     <p class="text-sm text-gray-500">Tiada rekod anak dipautkan kepada akaun anda. Sila hubungi pihak sekolah.</p>
                 @endforelse
             </div>
-        </div>
-
-        <div>
-            <a href="{{ route('portal.sejarah-bayaran') }}" class="text-sm text-blue-600 hover:underline">Lihat Sejarah Bayaran &rarr;</a>
         </div>
     </div>
 </x-app-layout>

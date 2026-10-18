@@ -39,17 +39,17 @@
                     }
                 });
             }
-        }" x-init="init()" class="flex h-screen overflow-hidden">
+        }" x-init="init()" class="flex h-dvh overflow-hidden">
             <!-- Mobile Sidebar Overlay -->
             <div x-cloak x-show="sidebarOpen && window.innerWidth < 1024" @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-black/50 transition-opacity" x-transition></div>
 
             <!-- Sidebar -->
-            <div x-cloak x-show="sidebarOpen" class="fixed left-0 top-0 z-40 w-64 h-screen lg:static lg:z-auto lg:relative print:hidden">
+            <div x-cloak x-show="sidebarOpen" class="fixed left-0 top-0 z-40 w-64 h-dvh lg:static lg:z-auto lg:relative print:hidden">
                 @include('layouts.navigation')
             </div>
 
             <div class="flex min-h-0 min-w-0 flex-1 flex-col">
-                <header class="sticky border-b border-gray-200 bg-white print:hidden">
+                <header class="sticky z-20 border-b border-gray-200 bg-white print:hidden">
                     <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8" style="height:63px;">
                         <!-- Left: Hamburger -->
                         <div class="flex items-center">
@@ -111,7 +111,7 @@
                     </div>
                 @endisset
 
-                <main class="flex-1 overflow-auto bg-gray-50">
+                <main class="flex-1 overflow-auto {{ $latarPutih ? 'bg-white' : 'bg-gray-50' }}">
                     <div class="px-4 py-8 sm:px-6 lg:px-4">
                         <div class="mx-auto sm:px-6 lg:px-4">
                             {{ $slot }}

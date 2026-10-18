@@ -24,8 +24,28 @@
                     <option value="Lain-lain" @selected(request('kaedah_bayaran') === 'Lain-lain')>Lain-lain</option>
                 </x-select>
             </div>
+            <div class="w-44">
+                <label class="block text-xs text-gray-500 mb-1">Kelas</label>
+                <x-searchable-select
+                    name="kelas_id"
+                    :options="$senaraiKelas->map(fn ($k) => ['value' => $k->id, 'label' => $k->nama_kelas])"
+                    :selected="request('kelas_id')"
+                    empty-label="Semua Kelas"
+                    placeholder="Taip untuk cari kelas..."
+                />
+            </div>
+            <div>
+                <label class="block text-xs text-gray-500 mb-1">Tahun</label>
+                <x-select name="darjah">
+                    <option value="">Semua Tahun</option>
+                    @foreach ($senaraiDarjah as $darjah)
+                        <option value="{{ $darjah }}" @selected(request('darjah') === $darjah)>{{ $darjah }}</option>
+                    @endforeach
+                </x-select>
+            </div>
             <button type="submit" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md">Tapis</button>
             <a href="{{ route('laporan.kutipan.csv', request()->query()) }}" class="px-4 py-2 bg-green-600 text-white text-sm rounded-md">Muat Turun CSV</a>
+            <a href="{{ route('laporan.kutipan.pdf', request()->query()) }}" class="px-4 py-2 bg-red-600 text-white text-sm rounded-md">Muat Turun PDF</a>
         </form>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">

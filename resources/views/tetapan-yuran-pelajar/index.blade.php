@@ -62,10 +62,7 @@
                                     <span class="text-xs text-gray-400">({{ $item->strukturYuran->kategoriYuran->nama ?? '-' }})</span>
                                 </td>
                                 <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">
-                                    {{ number_format($item->amaun_verride ?? $item->strukturYuran->amaun ?? 0, 2) }}
-                                    @if ($item->amaun_verride)
-                                        <span class="text-xs text-orange-600">(diselaraskan)</span>
-                                    @endif
+                                    {{ number_format($item->strukturYuran->amaun ?? 0, 2) }}
                                 </td>
                                 <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">
                                     <span class="px-2 py-1 text-xs rounded-full {{ $item->status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">

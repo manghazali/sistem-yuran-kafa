@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\PelajarTemplateExport;
 use App\Imports\PelajarImport;
+use App\Models\Guru;
 use App\Models\Kelas;
 use App\Models\Pelajar;
 use App\Models\Penjaga;
@@ -17,6 +18,34 @@ class PelajarController extends Controller
     public function index(Request $request)
     {
         $query = Pelajar::with(['kelas', 'penjaga']);
+        $senaraiKelas = Kelas::orderBy('nama_kelas')->get();
+
+        // Guru hanya boleh lihat pelajar dalam Kelas (dan Tahun, jika
+        // berkenaan) yang ditetapkan kepadanya melalui Pengurusan Kelas
+        // Guru — bukan senarai keseluruhan sekolah. Admin kekal lihat
+        // semua.
+        if ($request->user()->hasRole('Guru') && ! $request->user()->hasRole('Admin')) {
+            $guru = Guru::where('user_id', $request->user()->id)->first();
+            $guru?->load('guruKelas');
+
+            if (! $guru || $guru->guruKelas->isEmpty()) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->where(function ($q) use ($guru) {
+                    foreach ($guru->guruKelas as $gk) {
+                        $q->orWhere(function ($q2) use ($gk) {
+                            $q2->where('kelas_id', $gk->kelas_id);
+
+                            if ($gk->darjah) {
+                                $q2->where('darjah', $gk->darjah);
+                            }
+                        });
+                    }
+                });
+
+                $senaraiKelas = $senaraiKelas->whereIn('id', $guru->guruKelas->pluck('kelas_id'))->values();
+            }
+        }
 
         if ($request->filled('cari')) {
             $cari = $request->string('cari');
@@ -37,7 +66,6 @@ class PelajarController extends Controller
         [$urut, $arah] = $this->sahkanUrutan($request, ['no_daftar', 'nama', 'darjah', 'status'], 'nama');
 
         $pelajar = $query->orderBy($urut, $arah)->paginate(10)->withQueryString();
-        $senaraiKelas = Kelas::orderBy('nama_kelas')->get();
         $senaraiDarjah = self::SENARAI_DARJAH;
 
         return view('pelajar.index', compact('pelajar', 'senaraiKelas', 'senaraiDarjah', 'urut', 'arah'));

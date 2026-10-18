@@ -44,11 +44,10 @@
             <input type="hidden" name="struktur_yuran_id" value="{{ $input['struktur_yuran_id'] }}">
             <input type="hidden" name="kelas_id" value="{{ $input['kelas_id'] ?? '' }}">
             <input type="hidden" name="darjah" value="{{ $input['darjah'] ?? '' }}">
-            <input type="hidden" name="amaun_verride" value="{{ $input['amaun_verride'] ?? '' }}">
             <input type="hidden" name="status" value="{{ $input['status'] }}">
 
             <div class="flex items-center justify-end gap-3">
-                <a href="{{ route('tetapan-yuran-pelajar.pukal') }}" class="text-sm text-gray-600 hover:underline">&larr; Kembali &amp; Ubah</a>
+                <a href="{{ route('tetapan-yuran-pelajar.pukal') }}" class="text-sm text-gray-600">&larr; Kembali &amp; Ubah</a>
                 <button type="submit" @disabled($pelajarBaharu->isEmpty()) class="inline-flex items-center gap-2 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed">
                     Sahkan &amp; Tetapkan kepada {{ $pelajarBaharu->count() }} Pelajar
                 </button>

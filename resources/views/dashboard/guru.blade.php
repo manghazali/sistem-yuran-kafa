@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="text-2xl font-bold text-gray-900">Papan Pemuka</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Halaman Utama</h1>
         <p class="mt-1 text-sm text-gray-600">Selamat kembali, {{ Auth::user()->name }}!</p>
     </x-slot>
 
@@ -48,7 +48,7 @@
                     <div class="lg:col-span-2 rounded-lg border border-gray-200 bg-white shadow-sm">
                         <div class="border-b border-gray-200 px-6 py-4">
                             <h3 class="text-lg font-semibold text-gray-900">Status Bayaran Pelajar Mengikut Kelas</h3>
-                            <p class="text-sm text-gray-500 mt-1">Tahun {{ now()->year }} — bilangan pelajar Telah Bayar berbanding Tertunggak bagi setiap kelas anda.</p>
+                            <p class="text-sm text-gray-500 mt-1">Tahun {{ now()->year }} — jumlah (RM) Telah Bayar berbanding Tertunggak bagi setiap kelas anda.</p>
                         </div>
                         <div class="p-6">
                             <canvas id="cartaStatusBayaranGuru" height="120"></canvas>
@@ -89,7 +89,7 @@
                             datasets: [
                                 {
                                     label: 'Telah Bayar',
-                                    data: {!! json_encode($statusBayaranMengikutKelas->pluck('lunas')) !!},
+                                    data: {!! json_encode($statusBayaranMengikutKelas->pluck('dibayar')) !!},
                                     backgroundColor: '#16a34a',
                                     borderRadius: 6,
                                 },
@@ -103,8 +103,20 @@
                         },
                         options: {
                             responsive: true,
-                            plugins: { legend: { display: true, position: 'bottom' } },
-                            scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } }
+                            plugins: {
+                                legend: { display: true, position: 'bottom' },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (context) => `${context.dataset.label}: RM${context.parsed.y.toFixed(2)}`,
+                                    },
+                                },
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { callback: (value) => `RM${value}` },
+                                },
+                            },
                         }
                     });
                 }

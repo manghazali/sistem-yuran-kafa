@@ -89,7 +89,7 @@ class PortalKalendarController extends Controller
 
         if ($senaraiSemakan->isEmpty()) {
             return redirect()->route('portal.kalendar', $pelajar)
-                ->with('status', 'Yuran yang dipilih sudah lunas atau tiada yuran berkaitan.');
+                ->with('status', 'Yuran yang dipilih sudah dibayar atau tiada yuran berkaitan.');
         }
 
         $jumlahKeseluruhan = $senaraiSemakan->sum('baki');
@@ -125,7 +125,7 @@ class PortalKalendarController extends Controller
 
         if ($senaraiItem->isEmpty()) {
             return redirect()->route('portal.kalendar', $pelajar)
-                ->with('status', 'Yuran yang dipilih sudah lunas atau tiada yuran berkaitan.');
+                ->with('status', 'Yuran yang dipilih sudah dibayar atau tiada yuran berkaitan.');
         }
 
         $url = $this->gateway->mulakanTransaksiItem(

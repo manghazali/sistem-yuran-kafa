@@ -1,6 +1,6 @@
 <x-app-layout>
     <x-slot name="header">
-        <h1 class="text-2xl font-bold text-gray-900">Papan Pemuka</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Halaman Utama</h1>
         <p class="mt-1 text-sm text-gray-600">Selamat kembali, {{ Auth::user()->name }}! Berikut ringkasan sistem hari ini.</p>
     </x-slot>
 

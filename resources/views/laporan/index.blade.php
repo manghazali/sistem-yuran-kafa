@@ -68,7 +68,7 @@
                     <div class="flex items-start justify-between gap-4">
                         <div>
                             <p class="font-semibold text-lg text-gray-900">Laporan Baki Belum Dibayar</p>
-                            <p class="text-sm text-gray-500 mt-1">Senarai pelajar dengan bulan belum lunas, dikumpul mengikut pelajar.</p>
+                            <p class="text-sm text-gray-500 mt-1">Senarai pelajar dengan bulan belum dibayar, dikumpul mengikut pelajar.</p>
                         </div>
                         <span class="text-red-600 text-xl flex-shrink-0 transition-transform group-hover:translate-x-1">&rarr;</span>
                     </div>

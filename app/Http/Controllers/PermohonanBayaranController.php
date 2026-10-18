@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Guru;
 use App\Models\Pelajar;
 use App\Models\PermohonanBayaran;
+use App\Services\BakiBulananService;
 use App\Services\NotifikasiService;
 use Illuminate\Http\Request;
 
 class PermohonanBayaranController extends Controller
 {
-    public function __construct(protected NotifikasiService $notifikasi)
+    public function __construct(protected NotifikasiService $notifikasi, protected BakiBulananService $bakiService)
     {
     }
 
@@ -58,7 +59,25 @@ class PermohonanBayaranController extends Controller
 
         $senaraiPelajar = $query->orderBy('nama')->get();
 
-        return view('permohonan-bayaran.create', compact('senaraiPelajar'));
+        // Senarai yuran tertunggak BAGI SETIAP pelajar dalam skop guru ini,
+        // supaya guru boleh terus pilih struktur yuran yang tepat semasa
+        // melapor — Admin/Akauntan tidak perlu agak/pilih semula bila
+        // mengesahkan nanti (borang Rekod Bayaran pra-isi automatik).
+        $itemTertunggakMengikutPelajar = $senaraiPelajar->mapWithKeys(function ($pelajar) {
+            $item = $this->bakiService->senaraiBulan($pelajar, now()->year)
+                ->flatMap(fn ($bulanData) => collect($bulanData['butiran'])->map(fn ($butiran) => [
+                    'struktur_yuran_id' => $butiran['struktur_yuran_id'],
+                    'bulan' => $butiran['berulang'] ? $bulanData['bulan'] : null,
+                    'nama' => $butiran['nama'],
+                    'baki' => $butiran['baki'],
+                ]))
+                ->filter(fn ($i) => $i['baki'] > 0)
+                ->values();
+
+            return [$pelajar->id => $item];
+        });
+
+        return view('permohonan-bayaran.create', compact('senaraiPelajar', 'itemTertunggakMengikutPelajar'));
     }
 
     public function store(Request $request)
@@ -69,6 +88,8 @@ class PermohonanBayaranController extends Controller
 
         $validated = $request->validate([
             'pelajar_id' => ['required', 'exists:pelajar,id'],
+            'struktur_yuran_id' => ['required', 'exists:struktur_yuran,id'],
+            'bulan' => ['nullable', 'integer', 'between:1,12'],
             'amaun' => ['required', 'numeric', 'min:0.01'],
             'tarikh_terima' => ['required', 'date'],
             'catatan' => ['nullable', 'string', 'max:500'],
@@ -77,6 +98,8 @@ class PermohonanBayaranController extends Controller
         $permohonan = PermohonanBayaran::create([
             'guru_id' => $guru->id,
             'pelajar_id' => $validated['pelajar_id'],
+            'struktur_yuran_id' => $validated['struktur_yuran_id'] ?? null,
+            'bulan' => $validated['bulan'] ?? null,
             'amaun' => $validated['amaun'],
             'tarikh_terima' => $validated['tarikh_terima'],
             'catatan' => $validated['catatan'] ?? null,

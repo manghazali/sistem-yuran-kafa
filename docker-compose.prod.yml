@@ -1,0 +1,76 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: docker/production/Dockerfile
+        image: sistem-yuran-kafa:latest
+        restart: unless-stopped
+        env_file: .env
+        ports:
+            - '80:80'
+            - '443:443'
+        volumes:
+            - storage-app:/var/www/html/storage/app
+            - caddy-data:/data
+            - caddy-config:/config
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks:
+            - app
+
+    queue:
+        image: sistem-yuran-kafa:latest
+        restart: unless-stopped
+        env_file: .env
+        entrypoint: ['/usr/local/bin/entrypoint.sh']
+        command: ['php', 'artisan', 'queue:work', '--tries=3', '--sleep=3']
+        volumes:
+            - storage-app:/var/www/html/storage/app
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks:
+            - app
+
+    scheduler:
+        image: sistem-yuran-kafa:latest
+        restart: unless-stopped
+        env_file: .env
+        entrypoint: ['/usr/local/bin/entrypoint.sh']
+        command: ['sh', '-c', 'while true; do php artisan schedule:run --no-interaction; sleep 60; done']
+        volumes:
+            - storage-app:/var/www/html/storage/app
+        depends_on:
+            mysql:
+                condition: service_healthy
+        networks:
+            - app
+
+    mysql:
+        image: 'mysql:8.4'
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+        volumes:
+            - mysql-data:/var/lib/mysql
+        networks:
+            - app
+        healthcheck:
+            test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD}']
+            retries: 5
+            interval: 5s
+            timeout: 5s
+
+networks:
+    app:
+        driver: bridge
+
+volumes:
+    mysql-data:
+    storage-app:
+    caddy-data:
+    caddy-config:

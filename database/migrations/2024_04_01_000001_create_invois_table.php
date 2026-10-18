@@ -16,7 +16,7 @@ return new class extends Migration
             $table->date('tarikh_akhir_bayaran');
             $table->decimal('jumlah_keseluruhan', 10, 2)->default(0);
             $table->decimal('jumlah_dibayar', 10, 2)->default(0); // dikemaskini di FASA 5
-            $table->enum('status', ['Belum Bayar', 'Sebahagian', 'Lunas', 'Dibatalkan'])->default('Belum Bayar');
+            $table->enum('status', ['Belum Bayar', 'Sebahagian', 'Dibayar', 'Dibatalkan'])->default('Belum Bayar');
             $table->text('catatan')->nullable();
             $table->timestamps();
         });

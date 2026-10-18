@@ -12,16 +12,8 @@ class TetapanYuranPelajar extends Model
     protected $fillable = [
         'pelajar_id',
         'struktur_yuran_id',
-        'amaun_verride',
         'status',
     ];
-
-    protected function casts(): array
-    {
-        return [
-            'amaun_verride' => 'decimal:2',
-        ];
-    }
 
     public function pelajar(): BelongsTo
     {
@@ -31,14 +23,5 @@ class TetapanYuranPelajar extends Model
     public function strukturYuran(): BelongsTo
     {
         return $this->belongsTo(StrukturYuran::class, 'struktur_yuran_id');
-    }
-
-    /**
-     * Amaun sebenar yang perlu dibayar — guna override jika ada,
-     * jika tidak guna amaun asal dari struktur yuran.
-     */
-    public function amaunSebenar(): float
-    {
-        return (float) ($this->amaun_verride ?? $this->strukturYuran->amaun);
     }
 }

@@ -17,13 +17,6 @@
                     @method('PUT')
 
                     <div>
-                        <x-input-label for="amaun_verride" value="Amaun Diselaraskan (RM) — pilihan" />
-                        <x-text-input id="amaun_verride" name="amaun_verride" type="number" step="0.01" min="0" class="mt-1 block w-full" value="{{ old('amaun_verride', $tetapan->amaun_verride) }}" />
-                        <p class="text-xs text-gray-500 mt-1">Biar kosong untuk guna amaun standard dari struktur yuran.</p>
-                        <x-input-error :messages="$errors->get('amaun_verride')" class="mt-2" />
-                    </div>
-
-                    <div>
                         <x-input-label for="status" value="Status" />
                         <x-select id="status" name="status" class="mt-1 block w-full">
                             <option value="Aktif" @selected(old('status', $tetapan->status) === 'Aktif')>Aktif</option>
@@ -33,7 +26,7 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-3 pt-4">
-                        <a href="{{ route('tetapan-yuran-pelajar.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                        <a href="{{ route('tetapan-yuran-pelajar.index') }}" class="text-sm text-gray-600">Batal</a>
                         <x-primary-button>Kemaskini</x-primary-button>
                     </div>
                 </form>

@@ -5,7 +5,7 @@
 
     <div class="py-2 space-y-4">
 
-            <form method="GET" class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
+            <form method="GET" class="bg-white shadow-sm sm:rounded-lg p-4 flex flex-wrap gap-3 items-end">
                 <div>
                     <label class="block text-xs text-gray-500 mb-1">Pengguna</label>
                     <x-searchable-select

@@ -5,7 +5,7 @@
 
     <div class="py-2">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
                 <form method="POST" action="{{ route('pelajar.store') }}" class="space-y-4">
                     @csrf
 
@@ -89,7 +89,7 @@
                     </div>
 
                     <div class="flex items-center justify-end gap-3 pt-4">
-                        <a href="{{ route('pelajar.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                        <a href="{{ route('pelajar.index') }}" class="text-sm text-gray-600">Batal</a>
                         <x-primary-button>Simpan</x-primary-button>
                     </div>
                 </form>

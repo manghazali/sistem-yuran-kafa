@@ -40,7 +40,7 @@
             </div>
 
             <div class="flex items-center justify-between">
-                <a href="{{ route('portal.kalendar', $pelajar) }}" class="text-sm text-gray-600 hover:underline">&larr; Kembali & Ubah Pilihan</a>
+                <a href="{{ route('portal.kalendar', $pelajar) }}" class="text-sm text-gray-600">&larr; Kembali & Ubah Pilihan</a>
 
                 <form method="POST" action="{{ route('portal.kalendar.bayar', $pelajar) }}">
                     @csrf

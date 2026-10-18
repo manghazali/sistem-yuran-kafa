@@ -42,7 +42,16 @@ class TetapanYuranPelajarController extends Controller
         $senaraiPelajar = Pelajar::where('status', 'Aktif')->orderBy('nama')->get();
         $senaraiStruktur = StrukturYuran::with(['kategoriYuran', 'kelas'])->where('status', 'Aktif')->orderBy('nama')->get();
 
-        return view('tetapan-yuran-pelajar.create', compact('senaraiPelajar', 'senaraiStruktur'));
+        // Struktur yuran yang pelajar TERTENTU sudah ada — dihantar ke client
+        // supaya senarai pilihan multi-select secara automatik menyembunyikan
+        // struktur yang sudah ditetapkan, elak admin pilih sesuatu yang bakal
+        // dilangkau secara senyap semasa simpan.
+        $pelajarSudahAdaStruktur = TetapanYuranPelajar::select('pelajar_id', 'struktur_yuran_id')
+            ->get()
+            ->groupBy('pelajar_id')
+            ->map(fn ($baris) => $baris->pluck('struktur_yuran_id'));
+
+        return view('tetapan-yuran-pelajar.create', compact('senaraiPelajar', 'senaraiStruktur', 'pelajarSudahAdaStruktur'));
     }
 
     /**
@@ -65,36 +74,63 @@ class TetapanYuranPelajarController extends Controller
         }
     }
 
+    /**
+     * Tetapkan SATU ATAU LEBIH struktur yuran kepada seorang pelajar sekali
+     * gus (multi-select) — struktur yang skopnya tidak sepadan dengan
+     * pelajar GAGAL terus (ralat jelas, bukan dilangkau senyap), manakala
+     * struktur yang pelajar SUDAH ADA sebelum ini dilangkau senyap dan
+     * dilaporkan dalam mesej status (biasanya sudah tersembunyi oleh client
+     * pun, tapi disemak semula di sini sebagai pertahanan tambahan).
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'pelajar_id' => ['required', 'exists:pelajar,id'],
-            'struktur_yuran_id' => [
-                'required',
-                'exists:struktur_yuran,id',
-                'unique:tetapan_yuran_pelajar,struktur_yuran_id,NULL,id,pelajar_id,'.$request->input('pelajar_id'),
-            ],
-            'amaun_verride' => ['nullable', 'numeric', 'min:0'],
+            'struktur_yuran_id' => ['required', 'array', 'min:1'],
+            'struktur_yuran_id.*' => ['exists:struktur_yuran,id'],
             'status' => ['required', 'in:Aktif,Tidak Aktif'],
-        ], [
-            'struktur_yuran_id.unique' => 'Pelajar ini sudah ditetapkan struktur yuran ini.',
         ]);
 
-        $this->sahkanSkopStruktur(
-            Pelajar::findOrFail($validated['pelajar_id']),
-            StrukturYuran::findOrFail($validated['struktur_yuran_id'])
-        );
+        $pelajar = Pelajar::findOrFail($validated['pelajar_id']);
+        $senaraiStruktur = StrukturYuran::whereIn('id', $validated['struktur_yuran_id'])->get();
 
-        $tetapan = TetapanYuranPelajar::create($validated);
-        $tetapan->load('pelajar', 'strukturYuran');
+        foreach ($senaraiStruktur as $struktur) {
+            $this->sahkanSkopStruktur($pelajar, $struktur);
+        }
 
-        $this->notifikasi->hantarKePenjaga(
-            $tetapan->pelajar,
-            'Yuran Baharu Ditetapkan',
-            "Yuran \"{$tetapan->strukturYuran->nama}\" telah ditetapkan kepada {$tetapan->pelajar->nama}."
-        );
+        $sudahAda = TetapanYuranPelajar::where('pelajar_id', $pelajar->id)
+            ->whereIn('struktur_yuran_id', $validated['struktur_yuran_id'])
+            ->pluck('struktur_yuran_id');
 
-        return redirect()->route('tetapan-yuran-pelajar.index')->with('status', 'Yuran berjaya ditetapkan kepada pelajar.');
+        $bilangDitetapkan = 0;
+
+        foreach ($senaraiStruktur as $struktur) {
+            if ($sudahAda->contains($struktur->id)) {
+                continue;
+            }
+
+            TetapanYuranPelajar::create([
+                'pelajar_id' => $pelajar->id,
+                'struktur_yuran_id' => $struktur->id,
+                'status' => $validated['status'],
+            ]);
+
+            $this->notifikasi->hantarKePenjaga(
+                $pelajar,
+                'Yuran Baharu Ditetapkan',
+                "Yuran \"{$struktur->nama}\" telah ditetapkan kepada {$pelajar->nama}."
+            );
+
+            $bilangDitetapkan++;
+        }
+
+        $mesej = "{$bilangDitetapkan} struktur yuran berjaya ditetapkan kepada {$pelajar->nama}.";
+
+        if ($sudahAda->isNotEmpty()) {
+            $mesej .= " {$sudahAda->count()} dilangkau (sudah ditetapkan sebelum ini).";
+        }
+
+        return redirect()->route('tetapan-yuran-pelajar.index')->with('status', $mesej);
     }
 
     public function edit(TetapanYuranPelajar $tetapanYuranPelajar)
@@ -112,7 +148,6 @@ class TetapanYuranPelajarController extends Controller
     public function update(Request $request, TetapanYuranPelajar $tetapanYuranPelajar)
     {
         $validated = $request->validate([
-            'amaun_verride' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'in:Aktif,Tidak Aktif'],
         ]);
 
@@ -156,7 +191,6 @@ class TetapanYuranPelajarController extends Controller
             'struktur_yuran_id' => ['required', 'exists:struktur_yuran,id'],
             'kelas_id' => ['nullable', 'exists:kelas,id'],
             'darjah' => ['nullable', 'in:'.implode(',', PelajarController::SENARAI_DARJAH)],
-            'amaun_verride' => ['nullable', 'numeric', 'min:0'],
             'status' => ['required', 'in:Aktif,Tidak Aktif'],
         ];
     }
@@ -245,7 +279,6 @@ class TetapanYuranPelajarController extends Controller
             TetapanYuranPelajar::create([
                 'pelajar_id' => $pelajar->id,
                 'struktur_yuran_id' => $strukturYuran->id,
-                'amaun_verride' => $validated['amaun_verride'] ?? null,
                 'status' => $validated['status'],
             ]);
 

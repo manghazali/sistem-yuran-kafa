@@ -8,7 +8,7 @@ return new class extends Migration
 {
     /**
      * Pautkan satu Bayaran kepada struktur yuran (tetapan_yuran_pelajar) yang
-     * sebenarnya dibayar — supaya status "Belum Bayar/Sebahagian/Lunas" boleh
+     * sebenarnya dibayar — supaya status "Belum Bayar/Sebahagian/Dibayar" boleh
      * ditunjukkan bagi setiap item, bukan setahap bulan sahaja.
      */
     public function up(): void

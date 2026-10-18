@@ -5,7 +5,7 @@
 
     <div class="py-4">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="bg-white shadow-sm sm:rounded-lg p-6">
 
                 @if ($permohonan)
                     <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
@@ -13,6 +13,11 @@
                         <p class="mt-1">Guru {{ $permohonan->guru->nama }} melaporkan terima bayaran tunai RM{{ number_format($permohonan->amaun, 2) }} daripada {{ $pelajarDipilih->nama }} pada {{ $permohonan->tarikh_terima->format('d/m/Y') }}.</p>
                         @if ($permohonan->catatan)
                             <p class="mt-1 italic">"{{ $permohonan->catatan }}"</p>
+                        @endif
+                        @if ($itemPermohonanDipilih)
+                            <p class="mt-1">Struktur yuran dipilih oleh guru: <span class="font-semibold">{{ $itemPermohonanDipilih['nama'] }}</span> — butiran di bawah telah pra-isi.</p>
+                        @elseif ($permohonan->strukturYuran)
+                            <p class="mt-1">Struktur yuran dipilih oleh guru: <span class="font-semibold">{{ $permohonan->strukturYuran->nama }}</span> (baki semasa tidak ditemui — sila semak manual).</p>
                         @endif
                         <p class="mt-2 text-xs text-blue-600">Semak & lengkapkan butiran di bawah sebelum rekod secara rasmi.</p>
                     </div>
@@ -40,39 +45,28 @@
                             <input type="hidden" name="permohonan_id" value="{{ $permohonan->id }}">
                         @endif
 
-                        @if ($senaraiBulan->isNotEmpty())
+                        @if ($senaraiItemTertunggak->isNotEmpty())
                             <div>
-                                <x-input-label value="Bulan Tertunggak (pilihan - untuk auto-isi)" />
-                                <x-select id="pilih_bulan" class="mt-1 block w-full" onchange="isiBulan(this)">
+                                <x-input-label value="Struktur Yuran (pilihan - untuk auto-isi)" />
+                                <x-select id="pilih_struktur" class="mt-1 block w-full" onchange="isiStruktur(this)">
                                     <option value="">- Bayaran Lain (bukan bulanan) -</option>
-                                    @foreach ($senaraiBulan as $b)
-                                        @php $namaButiran = $b['butiran']->pluck('nama')->implode(', '); @endphp
-                                        <option value="{{ $b['bulan'] }}" data-tahun="{{ $b['tahun'] }}" data-baki="{{ $b['baki'] }}" data-keterangan="{{ $namaButiran }}">
-                                            {{ $b['label'] }} — {{ $namaButiran }} (Baki: RM{{ number_format($b['baki'], 2) }})
-                                        </option>
+                                    @foreach ($senaraiItemTertunggak as $item)
+                                        <option
+                                            value="{{ $item['struktur_yuran_id'] }}"
+                                            data-bulan="{{ $item['bulan'] }}"
+                                            data-tahun="{{ $item['tahun'] }}"
+                                            data-baki="{{ $item['baki'] }}"
+                                            data-keterangan="{{ $item['nama'] }}"
+                                            @selected($itemPermohonanDipilih && $itemPermohonanDipilih['struktur_yuran_id'] == $item['struktur_yuran_id'] && $itemPermohonanDipilih['bulan'] == $item['bulan'])
+                                        >{{ $item['nama'] }} (Baki: RM{{ number_format($item['baki'], 2) }})</option>
                                     @endforeach
                                 </x-select>
                             </div>
                         @endif
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <x-input-label for="bulan" value="Bulan (1-12, kosongkan jika bukan bulanan)" />
-                                <x-text-input type="number" id="bulan" name="bulan" min="1" max="12" class="mt-1 block w-full" value="{{ old('bulan') }}" />
-                                <x-input-error :messages="$errors->get('bulan')" class="mt-2" />
-                            </div>
-                            <div>
-                                <x-input-label for="tahun" value="Tahun" />
-                                <x-text-input type="number" id="tahun" name="tahun" class="mt-1 block w-full" value="{{ old('tahun', date('Y')) }}" />
-                                <x-input-error :messages="$errors->get('tahun')" class="mt-2" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <x-input-label for="keterangan" value="Keterangan (pilihan - auto-isi jika bulan dipilih)" />
-                            <x-text-input id="keterangan" name="keterangan" type="text" class="mt-1 block w-full" value="{{ old('keterangan') }}" placeholder="cth: Yuran Pendaftaran" />
-                            <x-input-error :messages="$errors->get('keterangan')" class="mt-2" />
-                        </div>
+                        <input type="hidden" id="bulan" name="bulan" value="{{ old('bulan', $itemPermohonanDipilih['bulan'] ?? null) }}">
+                        <input type="hidden" id="tahun" name="tahun" value="{{ old('tahun', $itemPermohonanDipilih['tahun'] ?? date('Y')) }}">
+                        <input type="hidden" id="keterangan" name="keterangan" value="{{ old('keterangan', $itemPermohonanDipilih['nama'] ?? null) }}">
 
                         <div>
                             <x-input-label for="amaun" value="Amaun Bayaran (RM)" />
@@ -111,16 +105,16 @@
                         </div>
 
                         <div class="flex items-center justify-end gap-3 pt-4">
-                            <a href="{{ route('bayaran.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                            <a href="{{ route('bayaran.index') }}" class="text-sm text-gray-600">Batal</a>
                             <x-primary-button>Rekod Bayaran</x-primary-button>
                         </div>
                     </form>
 
                     <script>
-                        function isiBulan(select) {
+                        function isiStruktur(select) {
                             const opsi = select.options[select.selectedIndex];
                             if (!opsi.value) return;
-                            document.getElementById('bulan').value = opsi.value;
+                            document.getElementById('bulan').value = opsi.dataset.bulan;
                             document.getElementById('tahun').value = opsi.dataset.tahun;
                             document.getElementById('amaun').value = parseFloat(opsi.dataset.baki).toFixed(2);
                             document.getElementById('keterangan').value = opsi.dataset.keterangan;

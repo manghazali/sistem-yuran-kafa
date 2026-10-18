@@ -66,7 +66,7 @@
                 <span class="text-sm text-gray-700">Saya faham tindakan ini melibatkan <strong>semua pelajar aktif</strong> dan mahu teruskan.</span>
             </label>
             <div class="flex items-center justify-end gap-3 pt-2">
-                <a href="{{ route('pelajar.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                <a href="{{ route('pelajar.index') }}" class="text-sm text-gray-600">Batal</a>
                 <button type="submit" class="inline-flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
                     Naikkan Darjah Semua Pelajar
                 </button>

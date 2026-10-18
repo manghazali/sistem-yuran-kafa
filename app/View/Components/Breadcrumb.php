@@ -34,7 +34,7 @@ class Breadcrumb extends Component
         }
 
         $penjaga = auth()->user()?->hasRole('Penjaga') ?? false;
-        $labelUtama = $penjaga ? __('Portal Penjaga') : __('Papan Pemuka');
+        $labelUtama = $penjaga ? __('Portal Penjaga') : __('Halaman Utama');
         $routeUtama = $penjaga ? 'portal.index' : 'dashboard';
         $lamanUtama = $penjaga
             ? ['portal.index']

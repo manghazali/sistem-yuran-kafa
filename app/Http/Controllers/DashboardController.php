@@ -126,23 +126,42 @@ class DashboardController extends Controller
 
             $prafetchBaki = $this->bakiService->prafetch($pelajarKelasSaya->pluck('id'), now()->year);
 
-            // Kumpulkan status bayaran (Lunas / Tertunggak) mengikut setiap
+            // Kumpulkan status bayaran (Dibayar / Tertunggak) mengikut setiap
             // penugasan Guru Kelas (bukan sekadar kelas_id pelajar) supaya
             // pelajar yang sama tidak terkumpul dua kali jika guru punya
             // lebih dari satu penugasan yang bertindih pada kelas yang sama.
             $statusBayaranMengikutKelas = $guru->guruKelas->map(function ($gk) use ($pelajarKelasSaya, $prafetchBaki) {
-                $senarai = $pelajarKelasSaya->filter(function ($p) use ($gk) {
-                    return $p->kelas_id === $gk->kelas_id && (! $gk->darjah || $p->darjah === $gk->darjah);
+                $senarai = $pelajarKelasSaya->filter(function ($p) use ($gk, $prafetchBaki) {
+                    if ($p->kelas_id !== $gk->kelas_id || ($gk->darjah && $p->darjah !== $gk->darjah)) {
+                        return false;
+                    }
+
+                    // Pelajar tanpa sebarang Struktur Yuran ditetapkan tiada
+                    // apa-apa untuk dikira dibayar/tertunggak — dikecualikan
+                    // supaya carta tidak mengelirukan (nampak "dibayar"
+                    // sedangkan sebenarnya tiada yuran langsung ditetapkan).
+                    return $prafetchBaki['tetapan']->get($p->id, collect())->isNotEmpty();
                 });
 
-                $lunas = $senarai->filter(fn ($p) => $this->bakiService->jumlahBakiTahunSemasa($p, $prafetchBaki) <= 0)->count();
+                // Jumlah RM sebenar (bukan sekadar bilangan pelajar) telah
+                // dibayar berbanding tertunggak, dikira merentasi 12 bulan
+                // tahun semasa bagi setiap pelajar dalam kumpulan ini.
+                $jumlahDibayar = 0.0;
+                $jumlahTertunggak = 0.0;
+
+                foreach ($senarai as $p) {
+                    $senaraiBulan = $this->bakiService->senaraiBulan($p, now()->year, $prafetchBaki);
+                    $jumlahDibayar += $senaraiBulan->sum('dibayar');
+                    $jumlahTertunggak += $senaraiBulan->sum('baki');
+                }
 
                 return [
                     'label' => ($gk->kelas->nama_kelas ?? '-').' ('.($gk->darjah ?? 'Semua Tahun').')',
-                    'lunas' => $lunas,
-                    'tertunggak' => $senarai->count() - $lunas,
+                    'dibayar' => round($jumlahDibayar, 2),
+                    'tertunggak' => round($jumlahTertunggak, 2),
+                    'jumlah_pelajar' => $senarai->count(),
                 ];
-            });
+            })->filter(fn ($d) => $d['jumlah_pelajar'] > 0)->values();
 
             PermohonanBayaran::where('guru_id', $guru->id)
                 ->selectRaw('status, count(*) as jumlah')

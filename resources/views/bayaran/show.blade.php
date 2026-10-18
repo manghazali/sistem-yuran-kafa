@@ -25,7 +25,7 @@
 
                 <div class="pt-4 flex gap-3">
                     <a href="{{ route('resit.show', $bayaran) }}" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md">Lihat / Cetak Resit</a>
-                    <a href="{{ route('bayaran.index') }}" class="px-4 py-2 text-sm text-gray-600 hover:underline">Kembali</a>
+                    <a href="{{ route('bayaran.index') }}" class="px-4 py-2 text-sm text-gray-600">Kembali</a>
                 </div>
             </div>
         </div>

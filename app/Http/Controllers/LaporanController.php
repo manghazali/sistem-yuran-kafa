@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bayaran;
+use App\Models\Kelas;
 use App\Models\Pelajar;
 use App\Services\BakiBulananService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -67,23 +69,26 @@ class LaporanController extends Controller
     {
         [$tarikhMula, $tarikhAkhir] = $this->julatTarikh($request);
 
-        $query = Bayaran::with(['pelajar.kelas'])
-            ->whereBetween('tarikh_bayaran', [$tarikhMula, $tarikhAkhir]);
+        $query = $this->queryKutipan($request, $tarikhMula, $tarikhAkhir);
 
-        if ($request->filled('kaedah_bayaran')) {
-            $query->where('kaedah_bayaran', $request->input('kaedah_bayaran'));
-        }
+        // PENTING: kira agregat (sum/groupBy) daripada klon $query SEBELUM
+        // orderBy() dikenakan di bawah untuk paginate() — orderBy() mengubah
+        // builder tersebut secara "in place", jadi klon selepas itu akan
+        // turut membawa ORDER BY tersebut sekali, menyebabkan ralat SQL
+        // "ORDER BY ... not in GROUP BY" pada pertanyaan groupBy() di bawah.
+        $jumlahKeseluruhan = (clone $query)->sum('amaun');
+
+        $pecahanKaedah = (clone $query)
+            ->selectRaw('kaedah_bayaran, SUM(amaun) as jumlah, COUNT(*) as bilangan')
+            ->groupBy('kaedah_bayaran')
+            ->get();
 
         [$urut, $arah] = $this->sahkanUrutan($request, ['no_bayaran', 'keterangan', 'amaun', 'kaedah_bayaran', 'tarikh_bayaran'], 'tarikh_bayaran', 'desc');
 
         $bayaran = $query->orderBy($urut, $arah)->paginate(10)->withQueryString();
 
-        $jumlahKeseluruhan = (clone $query)->sum('amaun');
-
-        $pecahanKaedah = Bayaran::whereBetween('tarikh_bayaran', [$tarikhMula, $tarikhAkhir])
-            ->selectRaw('kaedah_bayaran, SUM(amaun) as jumlah, COUNT(*) as bilangan')
-            ->groupBy('kaedah_bayaran')
-            ->get();
+        $senaraiKelas = Kelas::orderBy('nama_kelas')->get();
+        $senaraiDarjah = PelajarController::SENARAI_DARJAH;
 
         return view('laporan.kutipan', compact(
             'bayaran',
@@ -91,6 +96,8 @@ class LaporanController extends Controller
             'pecahanKaedah',
             'tarikhMula',
             'tarikhAkhir',
+            'senaraiKelas',
+            'senaraiDarjah',
             'urut',
             'arah'
         ));
@@ -100,12 +107,7 @@ class LaporanController extends Controller
     {
         [$tarikhMula, $tarikhAkhir] = $this->julatTarikh($request);
 
-        $query = Bayaran::with(['pelajar.kelas'])
-            ->whereBetween('tarikh_bayaran', [$tarikhMula, $tarikhAkhir]);
-
-        if ($request->filled('kaedah_bayaran')) {
-            $query->where('kaedah_bayaran', $request->input('kaedah_bayaran'));
-        }
+        $query = $this->queryKutipan($request, $tarikhMula, $tarikhAkhir);
 
         $namaFail = 'laporan-kutipan-'.$tarikhMula->format('Ymd').'-'.$tarikhAkhir->format('Ymd').'.csv';
 
@@ -135,6 +137,59 @@ class LaporanController extends Controller
         }, $namaFail, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    public function kutipanPdf(Request $request)
+    {
+        [$tarikhMula, $tarikhAkhir] = $this->julatTarikh($request);
+
+        $query = $this->queryKutipan($request, $tarikhMula, $tarikhAkhir);
+
+        $jumlahKeseluruhan = (clone $query)->sum('amaun');
+
+        $pecahanKaedah = (clone $query)
+            ->selectRaw('kaedah_bayaran, SUM(amaun) as jumlah, COUNT(*) as bilangan')
+            ->groupBy('kaedah_bayaran')
+            ->get();
+
+        $bayaran = $query->orderBy('tarikh_bayaran', 'desc')->get();
+
+        $namaFail = 'laporan-kutipan-'.$tarikhMula->format('Ymd').'-'.$tarikhAkhir->format('Ymd').'.pdf';
+
+        $pdf = Pdf::loadView('laporan.kutipan-pdf', compact(
+            'bayaran',
+            'jumlahKeseluruhan',
+            'pecahanKaedah',
+            'tarikhMula',
+            'tarikhAkhir'
+        ))->setPaper('a4', 'landscape');
+
+        return $pdf->download($namaFail);
+    }
+
+    /**
+     * Pertanyaan Bayaran ditapis mengikut julat tarikh + Kaedah Bayaran +
+     * Kelas + Tahun — dikongsi antara paparan jadual, pecahan kaedah, dan
+     * muat turun CSV supaya semua sentiasa konsisten.
+     */
+    protected function queryKutipan(Request $request, \Carbon\Carbon $tarikhMula, \Carbon\Carbon $tarikhAkhir)
+    {
+        $query = Bayaran::with(['pelajar.kelas'])
+            ->whereBetween('tarikh_bayaran', [$tarikhMula, $tarikhAkhir]);
+
+        if ($request->filled('kaedah_bayaran')) {
+            $query->where('kaedah_bayaran', $request->input('kaedah_bayaran'));
+        }
+
+        if ($request->filled('kelas_id')) {
+            $query->whereHas('pelajar', fn ($q) => $q->where('kelas_id', $request->input('kelas_id')));
+        }
+
+        if ($request->filled('darjah')) {
+            $query->whereHas('pelajar', fn ($q) => $q->where('darjah', $request->input('darjah')));
+        }
+
+        return $query;
     }
 
     protected function julatTarikh(Request $request): array

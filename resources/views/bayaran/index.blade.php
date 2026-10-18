@@ -27,6 +27,20 @@
                     placeholder="Taip untuk cari nama / no. pendaftaran..."
                     class="flex-1"
                 />
+                <x-searchable-select
+                    name="kelas_id"
+                    :options="$senaraiKelas->map(fn ($k) => ['value' => $k->id, 'label' => $k->nama_kelas])"
+                    :selected="request('kelas_id')"
+                    empty-label="Semua Kelas"
+                    placeholder="Taip untuk cari kelas..."
+                    class="w-48"
+                />
+                <x-select name="darjah">
+                    <option value="">Semua Tahun</option>
+                    @foreach ($senaraiDarjah as $darjah)
+                        <option value="{{ $darjah }}" @selected(request('darjah') === $darjah)>{{ $darjah }}</option>
+                    @endforeach
+                </x-select>
                 <button type="submit" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md">Tapis</button>
             </form>
 

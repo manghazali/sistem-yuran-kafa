@@ -48,7 +48,7 @@
                     <p class="text-xs text-gray-500">Kata laluan sementara akan dijana secara rawak dan dihantar ke emel di atas.</p>
 
                     <div class="flex items-center justify-end gap-3 pt-4">
-                        <a href="{{ route('pengguna.index') }}" class="text-sm text-gray-600 hover:underline">Batal</a>
+                        <a href="{{ route('pengguna.index') }}" class="text-sm text-gray-600">Batal</a>
                         <x-primary-button>Cipta Pengguna</x-primary-button>
                     </div>
                 </form>

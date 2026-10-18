@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bayaran;
+use App\Models\Kelas;
 use App\Models\Pelajar;
 use App\Models\PermohonanBayaran;
 use App\Services\BakiBulananService;
@@ -23,21 +24,32 @@ class BayaranController extends Controller
             $query->where('pelajar_id', $request->input('pelajar_id'));
         }
 
+        if ($request->filled('kelas_id')) {
+            $query->whereHas('pelajar', fn ($q) => $q->where('kelas_id', $request->input('kelas_id')));
+        }
+
+        if ($request->filled('darjah')) {
+            $query->whereHas('pelajar', fn ($q) => $q->where('darjah', $request->input('darjah')));
+        }
+
         [$urut, $arah] = $this->sahkanUrutan($request, ['no_bayaran', 'keterangan', 'amaun', 'kaedah_bayaran', 'tarikh_bayaran'], 'tarikh_bayaran', 'desc');
 
         $bayaran = $query->orderBy($urut, $arah)->paginate(10)->withQueryString();
         $senaraiPelajar = Pelajar::orderBy('nama')->get();
+        $senaraiKelas = Kelas::orderBy('nama_kelas')->get();
+        $senaraiDarjah = PelajarController::SENARAI_DARJAH;
         $jumlahHariIni = Bayaran::whereDate('tarikh_bayaran', today())->sum('amaun');
 
-        return view('bayaran.index', compact('bayaran', 'senaraiPelajar', 'jumlahHariIni', 'urut', 'arah'));
+        return view('bayaran.index', compact('bayaran', 'senaraiPelajar', 'senaraiKelas', 'senaraiDarjah', 'jumlahHariIni', 'urut', 'arah'));
     }
 
     public function create(Request $request)
     {
         $senaraiPelajar = Pelajar::where('status', 'Aktif')->orderBy('nama')->get();
         $pelajarDipilih = null;
-        $senaraiBulan = collect();
+        $senaraiItemTertunggak = collect();
         $permohonan = null;
+        $itemPermohonanDipilih = null;
 
         if ($request->filled('permohonan_id')) {
             $permohonan = PermohonanBayaran::with('guru')
@@ -51,13 +63,33 @@ class BayaranController extends Controller
             $pelajarDipilih = Pelajar::find($pelajarIdDipilih);
 
             if ($pelajarDipilih) {
-                $senaraiBulan = $this->bakiService->senaraiBulan($pelajarDipilih, now()->year)
-                    ->filter(fn ($b) => $b['baki'] > 0)
+                // Senarai PER STRUKTUR YURAN (bukan per-bulan agregat) supaya
+                // Admin/Akauntan boleh terus pilih yuran yang tepat — sama
+                // konsep dengan dropdown Struktur Yuran di borang Laporkan
+                // Bayaran Diterima (guru).
+                $senaraiItemTertunggak = $this->bakiService->senaraiBulan($pelajarDipilih, now()->year)
+                    ->flatMap(fn ($bulanData) => collect($bulanData['butiran'])->map(fn ($butiran) => [
+                        'struktur_yuran_id' => $butiran['struktur_yuran_id'],
+                        'bulan' => $bulanData['bulan'],
+                        'tahun' => $bulanData['tahun'],
+                        'nama' => $butiran['nama'],
+                        'baki' => $butiran['baki'],
+                    ]))
+                    ->filter(fn ($i) => $i['baki'] > 0)
                     ->values();
+
+                // Jika guru sudah nyatakan struktur yuran (dan bulan, jika
+                // berkenaan) semasa melaporkan, padankan dengan baki semasa
+                // supaya terus pra-isi — Admin/Akauntan tidak perlu pilih
+                // semula secara manual.
+                if ($permohonan?->struktur_yuran_id) {
+                    $itemPermohonanDipilih = $senaraiItemTertunggak->first(fn ($i) => $i['struktur_yuran_id'] == $permohonan->struktur_yuran_id
+                        && (! $permohonan->bulan || $i['bulan'] == $permohonan->bulan));
+                }
             }
         }
 
-        return view('bayaran.create', compact('senaraiPelajar', 'pelajarDipilih', 'senaraiBulan', 'permohonan'));
+        return view('bayaran.create', compact('senaraiPelajar', 'pelajarDipilih', 'senaraiItemTertunggak', 'permohonan', 'itemPermohonanDipilih'));
     }
 
     public function store(Request $request)

@@ -44,10 +44,6 @@
                         </div>
                     </div>
                 @endif
-
-                <div class="mt-6">
-                    <a href="{{ route('portal.sejarah-bayaran') }}" class="px-4 py-2 bg-gray-800 text-white text-sm rounded-md">Lihat Sejarah Bayaran</a>
-                </div>
             </div>
         </div>
     </div>

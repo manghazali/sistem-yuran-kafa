@@ -128,7 +128,7 @@ class BakiBulananService
             $kolamBaki = $kolamTanpaAgihanMengikutBulan->get($bulan, 0.0);
 
             $butiran = $tetapanTerpakai->map(function ($t) use ($dibayarTepatBulanIni, &$kolamBaki, $awalBulan) {
-                $amaunItem = (float) ($t->amaun_verride ?? $t->strukturYuran->amaun);
+                $amaunItem = (float) $t->strukturYuran->amaun;
                 $dibayarTepat = (float) ($dibayarTepatBulanIni[$t->id] ?? 0);
                 $bakiSelepasTepat = max(0, round($amaunItem - $dibayarTepat, 2));
 
@@ -154,13 +154,14 @@ class BakiBulananService
 
                 return [
                     'id' => $t->id,
+                    'struktur_yuran_id' => $t->struktur_yuran_id,
                     'nama' => $nama,
                     'berulang' => $berulang,
                     'amaun' => $amaunItem,
                     'dibayar' => $dibayarItem,
                     'baki' => $bakiItem,
                     'status' => match (true) {
-                        $bakiItem <= 0 => 'Lunas',
+                        $bakiItem <= 0 => 'Dibayar',
                         $dibayarItem > 0 => 'Sebahagian',
                         default => 'Belum Bayar',
                     },
@@ -172,7 +173,7 @@ class BakiBulananService
             $baki = round($jumlah - $dibayar, 2);
 
             $status = match (true) {
-                $baki <= 0 => 'Lunas',
+                $baki <= 0 => 'Dibayar',
                 $dibayar > 0 => 'Sebahagian',
                 default => 'Belum Bayar',
             };
