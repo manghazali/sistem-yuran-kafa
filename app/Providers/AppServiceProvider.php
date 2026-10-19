@@ -11,8 +11,10 @@ use App\Models\Tetapan;
 use App\Observers\BayaranObserver;
 use App\Observers\PelajarObserver;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +32,13 @@ class AppServiceProvider extends ServiceProvider
         Pelajar::observe(PelajarObserver::class);
 
         $this->konfigurasiEmelDinamik();
+
+        // Had hantaran emel akaun (Guru/Penjaga) — 85 sehari, bukan 100,
+        // supaya ada ruang selamat untuk emel transaksi lain (reset kata
+        // laluan, pengesahan bayaran) pada hari yang sama tanpa lebihi had
+        // 100/hari pelan percuma Resend. Lebihan dijadualkan semula secara
+        // automatik (release) untuk hari berikutnya, bukan gagal/hilang.
+        RateLimiter::for('emel-harian', fn () => Limit::perDay(85));
 
         View::composer('layouts.app', function ($view) {
             if (! auth()->check()) {

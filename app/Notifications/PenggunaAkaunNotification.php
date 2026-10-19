@@ -5,10 +5,11 @@ namespace App\Notifications;
 use App\Models\User;
 use App\Support\EmelTemplat;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PenggunaAkaunNotification extends Notification
+class PenggunaAkaunNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
