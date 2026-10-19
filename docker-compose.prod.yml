@@ -55,6 +55,12 @@ services:
             MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
             MYSQL_PASSWORD: '${DB_PASSWORD}'
+        ports:
+            # Terikat kepada 127.0.0.1 SAHAJA (bukan 0.0.0.0) — tidak boleh
+            # dicapai terus dari internet, hanya melalui SSH tunnel dari
+            # droplet sendiri. Lapisan pertahanan tambahan selain firewall
+            # ufw yang sudah menyekat port 3306 dari luar.
+            - '127.0.0.1:3306:3306'
         volumes:
             - mysql-data:/var/lib/mysql
         networks:
