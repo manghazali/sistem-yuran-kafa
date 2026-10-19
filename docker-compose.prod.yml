@@ -47,11 +47,12 @@ services:
         networks:
             - app
 
-    adminer:
-        image: adminer:latest
+    phpmyadmin:
+        image: phpmyadmin:latest
         restart: unless-stopped
         environment:
-            ADMINER_DEFAULT_SERVER: mysql
+            PMA_HOST: mysql
+            PMA_ABSOLUTE_URI: /db-admin/
         networks:
             - app
         depends_on:

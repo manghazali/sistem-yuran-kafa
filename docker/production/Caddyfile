@@ -7,15 +7,16 @@
 		Referrer-Policy "strict-origin-when-cross-origin"
 	}
 
-	# Adminer (GUI pangkalan data melalui pelayar) — dilindungi kata laluan
-	# asas Caddy (basicauth) supaya tidak terbuka kepada sesiapa sahaja di
-	# internet. Hash kata laluan dijana melalui `caddy hash-password`,
-	# bukan kata laluan mentah — selamat untuk disimpan dalam repo.
+	# phpMyAdmin (GUI pangkalan data melalui pelayar) — dilindungi kata
+	# laluan asas Caddy (basic_auth) supaya tidak terbuka kepada sesiapa
+	# sahaja di internet. Hash kata laluan dijana melalui
+	# `caddy hash-password`, bukan kata laluan mentah — selamat untuk
+	# disimpan dalam repo.
 	handle_path /db-admin/* {
 		basic_auth {
 			admin $2a$14$45wcW8CKqti5G22ZD7mwO.RFbeACy6P2v7BK1JncEK54guqo1i3VK
 		}
-		reverse_proxy adminer:8080
+		reverse_proxy phpmyadmin:80
 	}
 
 	handle {
