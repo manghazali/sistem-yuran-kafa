@@ -82,7 +82,7 @@ class RoleAndPermissionSeeder extends Seeder
 
         // Akaun admin lalai supaya boleh log masuk terus
         $adminUser = User::firstOrCreate(
-            ['email' => 'admin@kafa.test'],
+            ['email' => 'yuran.kids2026@gmail.com'],
             [
                 'name' => 'Pentadbir Sistem',
                 'password' => Hash::make('password'),
