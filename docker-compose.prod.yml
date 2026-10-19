@@ -47,6 +47,17 @@ services:
         networks:
             - app
 
+    adminer:
+        image: adminer:latest
+        restart: unless-stopped
+        environment:
+            ADMINER_DEFAULT_SERVER: mysql
+        networks:
+            - app
+        depends_on:
+            mysql:
+                condition: service_healthy
+
     mysql:
         image: 'mysql:8.4'
         restart: unless-stopped

@@ -1,16 +1,30 @@
 {$APP_DOMAIN} {
-	root * /var/www/html/public
 	encode gzip
-
-	# PHP-FPM berjalan dalam kontena yang sama (uruskan Supervisor), terus
-	# ke socket TCP tempatan — bukan proksi ke kontena lain.
-	php_fastcgi 127.0.0.1:9000
-
-	file_server
 
 	header {
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "SAMEORIGIN"
 		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Adminer (GUI pangkalan data melalui pelayar) — dilindungi kata laluan
+	# asas Caddy (basicauth) supaya tidak terbuka kepada sesiapa sahaja di
+	# internet. Hash kata laluan dijana melalui `caddy hash-password`,
+	# bukan kata laluan mentah — selamat untuk disimpan dalam repo.
+	handle_path /db-admin/* {
+		basic_auth {
+			admin $2a$14$45wcW8CKqti5G22ZD7mwO.RFbeACy6P2v7BK1JncEK54guqo1i3VK
+		}
+		reverse_proxy adminer:8080
+	}
+
+	handle {
+		root * /var/www/html/public
+
+		# PHP-FPM berjalan dalam kontena yang sama (uruskan Supervisor),
+		# terus ke socket TCP tempatan — bukan proksi ke kontena lain.
+		php_fastcgi 127.0.0.1:9000
+
+		file_server
 	}
 }
