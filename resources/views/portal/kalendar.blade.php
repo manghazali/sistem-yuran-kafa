@@ -4,12 +4,14 @@
     </x-slot>
 
     <div class="py-2">
+        <x-portal.tajuk-telefon :tajuk="$pelajar->nama" :subtajuk="'Kalendar yuran '.$tahun" :kembali="route('portal.index')" />
+
         <div>
             @if (session('status'))
                 <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
             @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="bg-white shadow-sm rounded-2xl border border-gray-200 p-4 lg:overflow-hidden lg:rounded-lg lg:border-0 lg:p-6">
                 <p class="text-sm text-gray-500 mb-4">
                     Tandakan yuran mana-mana yang anda mahu bayar sekarang. Anda akan
                     disemak dahulu sebelum bayaran dimulakan.
@@ -36,19 +38,20 @@
                                     @endphp
                                     <div class="flex items-center gap-3 p-3 {{ $itemBolehPilih ? 'hover:bg-gray-50' : 'opacity-75' }}">
                                         @if ($itemBolehPilih)
-                                            <input type="checkbox" name="item[]" value="{{ $b['bulan'] }}:{{ $item['id'] }}" class="rounded border-gray-300 item-checkbox" data-amaun="{{ $item['baki'] }}">
+                                            <input type="checkbox" name="item[]" value="{{ $b['bulan'] }}:{{ $item['id'] }}" class="h-5 w-5 rounded border-gray-300 text-green-600 lg:h-4 lg:w-4 item-checkbox" data-amaun="{{ $item['baki'] }}">
                                         @else
                                             <span class="w-4 h-4 flex items-center justify-center text-green-600 text-xs">✓</span>
                                         @endif
 
-                                        <div class="flex-1">
+                                        <div class="min-w-0 flex-1">
                                             <p class="text-sm font-medium">{{ $item['nama'] }}</p>
                                             @if ($item['status'] === 'Sebahagian')
                                                 <p class="text-xs text-gray-500">Baki dari jumlah asal RM{{ number_format($item['amaun'], 2) }}</p>
                                             @endif
+                                            <span class="mt-1 inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs lg:hidden {{ $warna }}">{{ $item['status'] }}</span>
                                         </div>
 
-                                        <span class="px-2 py-1 text-xs rounded-full {{ $warna }}">
+                                        <span class="hidden px-2 py-1 text-xs rounded-full lg:inline {{ $warna }}">
                                             {{ $item['status'] }}
                                         </span>
 
@@ -60,16 +63,19 @@
                             @endforeach
                         </div>
 
-                        <div class="flex justify-between items-center border-t pt-4">
-                            <button type="button" id="btn-pilih-semua" class="text-sm text-blue-600 hover:underline">Pilih/Nyahpilih Semua</button>
-                            <p class="text-lg font-bold">Jumlah: RM<span id="jumlah-display">0.00</span></p>
-                        </div>
+                        {{-- Di telefon, jumlah & butang kekal kelihatan di atas bar tab bawah --}}
+                        <div class="sticky bottom-[5.5rem] z-10 rounded-2xl border border-gray-200 bg-white p-4 shadow-lg lg:static lg:rounded-none lg:border-0 lg:border-t lg:p-0 lg:pt-4 lg:shadow-none">
+                            <div class="flex justify-between items-center">
+                                <button type="button" id="btn-pilih-semua" class="text-sm text-blue-600 hover:underline"><span class="lg:hidden">Pilih semua</span><span class="hidden lg:inline">Pilih/Nyahpilih Semua</span></button>
+                                <p class="whitespace-nowrap text-lg font-bold">Jumlah: RM<span id="jumlah-display">0.00</span></p>
+                            </div>
 
-                        <div class="flex items-center justify-end gap-3 pt-4">
-                            <a href="{{ route('portal.index') }}" class="text-sm text-gray-600">Kembali</a>
-                            <button type="submit" id="btn-bayar" class="px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-md hover:bg-gray-700 opacity-50" disabled>
-                                Semak Sebelum Bayar &rarr;
-                            </button>
+                            <div class="flex items-center justify-end gap-3 pt-4">
+                                <a href="{{ route('portal.index') }}" class="hidden text-sm text-gray-600 lg:inline">Kembali</a>
+                                <button type="submit" id="btn-bayar" class="w-full rounded-full bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700 lg:w-auto lg:rounded-md lg:bg-gray-800 lg:py-2 lg:font-medium lg:hover:bg-gray-700 opacity-50" disabled>
+                                    Semak Sebelum Bayar &rarr;
+                                </button>
+                            </div>
                         </div>
                     </form>
 

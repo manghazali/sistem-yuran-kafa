@@ -27,6 +27,10 @@
         </style>
     </head>
     <body class="font-sans antialiased bg-gray-50 text-gray-900">
+        @php
+            // Penjaga di telefon guna paparan gaya aplikasi: bar tab bawah, tiada sidebar/breadcrumb.
+            $modPenjaga = auth()->user()?->hasRole('Penjaga') ?? false;
+        @endphp
         <div x-data="{
             sidebarOpen: false,
             init() {
@@ -53,9 +57,16 @@
                     <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8" style="height:63px;">
                         <!-- Left: Hamburger -->
                         <div class="flex items-center">
-                            <button @click="sidebarOpen = !sidebarOpen" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition lg:hidden">
-                                <i class="fas fa-bars text-base"></i>
-                            </button>
+                            @if ($modPenjaga)
+                                <a href="{{ route('portal.index') }}" class="flex items-center gap-2 lg:hidden">
+                                    <img src="{{ asset('images/logo.png') }}" alt="Logo Sekolah" class="h-9 w-9 object-contain">
+                                    <span class="text-gray-800 font-semibold text-sm leading-tight">SISTEM YURAN<br>KAFA</span>
+                                </a>
+                            @else
+                                <button @click="sidebarOpen = !sidebarOpen" class="inline-flex h-10 w-10 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-100 transition lg:hidden">
+                                    <i class="fas fa-bars text-base"></i>
+                                </button>
+                            @endif
                         </div>
 
                         <!-- Right: Notifications -->
@@ -99,12 +110,12 @@
                     </div>
                 </header>
 
-                <div class="print:hidden">
+                <div class="print:hidden {{ $modPenjaga ? 'hidden lg:block' : '' }}">
                     <x-breadcrumb />
                 </div>
 
                 @isset($header)
-                    <div class="border-b border-gray-200 bg-white px-4 py-6 sm:px-6 lg:px-4 print:hidden">
+                    <div class="border-b border-gray-200 bg-white px-4 py-6 sm:px-6 lg:px-4 print:hidden {{ $modPenjaga ? 'hidden lg:block' : '' }}">
                         <div class="mx-auto sm:px-6 lg:px-4">
                             {{ $header }}
                         </div>
@@ -112,7 +123,7 @@
                 @endisset
 
                 <main class="flex-1 overflow-auto {{ $latarPutih ? 'bg-white' : 'bg-gray-50' }}">
-                    <div class="px-4 py-8 sm:px-6 lg:px-4">
+                    <div class="px-4 sm:px-6 lg:px-4 {{ $modPenjaga ? 'pt-5 pb-28 lg:py-8' : 'py-8' }}">
                         <div class="mx-auto sm:px-6 lg:px-4">
                             {{ $slot }}
                         </div>
@@ -120,5 +131,28 @@
                 </main>
             </div>
         </div>
+
+        @if ($modPenjaga)
+            @php
+                $tabPenjaga = [
+                    ['route' => 'portal.index', 'aktif' => ['portal.index', 'portal.kalendar*'], 'ikon' => 'fa-house', 'label' => 'Utama'],
+                    ['route' => 'portal.yuran.belum-bayar', 'aktif' => ['portal.yuran.*'], 'ikon' => 'fa-sack-dollar', 'label' => 'Yuran'],
+                    ['route' => 'portal.sejarah-bayaran', 'aktif' => ['portal.sejarah-bayaran', 'portal.status-pembayaran'], 'ikon' => 'fa-receipt', 'label' => 'Bayaran'],
+                    ['route' => 'profile.edit', 'aktif' => ['profile.*'], 'ikon' => 'fa-circle-user', 'label' => 'Akaun'],
+                ];
+            @endphp
+            <nav class="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur lg:hidden print:hidden" style="padding-bottom: env(safe-area-inset-bottom);">
+                <div class="grid grid-cols-4">
+                    @foreach ($tabPenjaga as $tab)
+                        @php $aktif = request()->routeIs(...$tab['aktif']); @endphp
+                        <a href="{{ route($tab['route']) }}"
+                           class="flex flex-col items-center gap-1 py-2.5 text-xs font-medium {{ $aktif ? 'text-green-700' : 'text-gray-500' }}">
+                            <i class="fas {{ $tab['ikon'] }} text-xl"></i>
+                            {{ $tab['label'] }}
+                        </a>
+                    @endforeach
+                </div>
+            </nav>
+        @endif
     </body>
 </html>

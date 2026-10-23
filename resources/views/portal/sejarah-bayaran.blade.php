@@ -4,6 +4,9 @@
     </x-slot>
 
     <div class="py-2">
+        <x-portal.tajuk-telefon tajuk="Bayaran" subtajuk="Sejarah bayaran dan resit" />
+        @include('portal.partials.tab-bayaran')
+
         @if ($anak->count() > 1)
             <div class="mb-4">
                 <form method="GET" class="flex gap-3">
@@ -17,7 +20,32 @@
             </div>
         @endif
 
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        {{-- Paparan telefon --}}
+        <div class="space-y-3 lg:hidden">
+            @forelse ($bayaran as $item)
+                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-gray-900">{{ $item->keterangan }}</p>
+                            <p class="truncate text-xs text-gray-500">{{ $item->pelajar->nama ?? '-' }}</p>
+                        </div>
+                        <p class="flex-shrink-0 text-base font-bold text-green-700">RM{{ number_format($item->amaun, 2) }}</p>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                        <p class="text-xs text-gray-500">{{ $item->tarikh_bayaran?->format('d/m/Y') }} · {{ $item->no_bayaran }}</p>
+                        <a href="{{ route('resit.show', $item) }}" class="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white">Resit</a>
+                    </div>
+                </div>
+            @empty
+                <p class="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+                    {{ $pelajarDipilih ? 'Tiada bayaran direkodkan lagi untuk '.$pelajarDipilih->nama.'.' : 'Tiada bayaran direkodkan lagi.' }}
+                </p>
+            @endforelse
+            <div class="pt-1">{{ $bayaran->links('vendor.pagination.compact') }}</div>
+        </div>
+
+        {{-- Paparan desktop --}}
+        <div class="hidden lg:block bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-green-50">

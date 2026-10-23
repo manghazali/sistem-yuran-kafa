@@ -4,6 +4,8 @@
     </x-slot>
 
     <div class="py-2">
+        <x-portal.tajuk-telefon tajuk="Semak Sebelum Bayar" :subtajuk="$pelajar->nama" :kembali="route('portal.kalendar', $pelajar)" />
+
         <div class="space-y-4">
 
             <div class="p-4 bg-blue-50 text-blue-800 text-sm rounded-md">
@@ -11,7 +13,7 @@
                 dibawa ke gateway pembayaran untuk bayar selepas sahkan di sini.
             </div>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+            <div class="bg-white overflow-hidden shadow-sm rounded-2xl border border-gray-200 p-4 lg:rounded-lg lg:border-0 lg:p-6">
                 <div class="flex justify-between items-start mb-4 pb-4 border-b">
                     <div>
                         <h3 class="font-semibold text-gray-800">{{ $pelajar->nama }}</h3>
@@ -39,17 +41,17 @@
                 </table>
             </div>
 
-            <div class="flex items-center justify-between">
-                <a href="{{ route('portal.kalendar', $pelajar) }}" class="text-sm text-gray-600">&larr; Kembali & Ubah Pilihan</a>
+            <div class="flex flex-col-reverse gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <a href="{{ route('portal.kalendar', $pelajar) }}" class="text-center text-sm text-gray-600 lg:text-left">&larr; Kembali & Ubah Pilihan</a>
 
-                <form method="POST" action="{{ route('portal.kalendar.bayar', $pelajar) }}">
+                <form method="POST" action="{{ route('portal.kalendar.bayar', $pelajar) }}" class="w-full lg:w-auto">
                     @csrf
                     @foreach ($senaraiSemakan as $b)
                         @foreach ($b['butiran'] as $item)
                             <input type="hidden" name="item[]" value="{{ $b['bulan'] }}:{{ $item['id'] }}">
                         @endforeach
                     @endforeach
-                    <button type="submit" class="px-6 py-3 bg-green-600 text-white font-medium rounded-md hover:bg-green-700">
+                    <button type="submit" class="w-full rounded-full px-6 py-3 bg-green-600 text-white font-semibold hover:bg-green-700 lg:w-auto lg:rounded-md lg:font-medium">
                         Bayar Sekarang — RM{{ number_format($jumlahKeseluruhan, 2) }}
                     </button>
                 </form>

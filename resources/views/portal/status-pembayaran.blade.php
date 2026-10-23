@@ -4,12 +4,45 @@
     </x-slot>
 
     <div class="py-2">
+        <x-portal.tajuk-telefon tajuk="Bayaran" subtajuk="Status bayaran dalam talian" />
+        @include('portal.partials.tab-bayaran')
+
         <p class="text-sm text-gray-500 mb-4">
             Senarai percubaan bayaran melalui gateway pembayaran, termasuk yang masih menunggu atau gagal.
             Bayaran yang berjaya juga direkodkan dalam <a href="{{ route('portal.sejarah-bayaran') }}" class="text-blue-600 hover:underline">Sejarah Bayaran</a>.
         </p>
 
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        {{-- Paparan telefon --}}
+        <div class="space-y-3 lg:hidden">
+            @forelse ($transaksi as $item)
+                @php
+                    $warna = match ($item->status) {
+                        'Berjaya' => 'bg-green-100 text-green-800',
+                        'Gagal' => 'bg-red-100 text-red-800',
+                        default => 'bg-yellow-100 text-yellow-800',
+                    };
+                @endphp
+                <div class="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-gray-900">{{ $item->itemBayaran->pluck('keterangan')->implode(' • ') }}</p>
+                            <p class="truncate text-xs text-gray-500">{{ $item->itemBayaran->pluck('pelajar.nama')->unique()->implode(', ') }}</p>
+                        </div>
+                        <p class="flex-shrink-0 text-base font-bold text-gray-900">RM{{ number_format($item->amaun, 2) }}</p>
+                    </div>
+                    <div class="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                        <p class="text-xs text-gray-500">{{ $item->created_at->format('d/m/Y H:i') }}</p>
+                        <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $warna }}">{{ $item->status }}</span>
+                    </div>
+                </div>
+            @empty
+                <p class="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500">Tiada percubaan bayaran direkodkan lagi.</p>
+            @endforelse
+            <div class="pt-1">{{ $transaksi->links('vendor.pagination.compact') }}</div>
+        </div>
+
+        {{-- Paparan desktop --}}
+        <div class="hidden lg:block bg-white overflow-hidden shadow-sm sm:rounded-lg">
             <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-green-50">
