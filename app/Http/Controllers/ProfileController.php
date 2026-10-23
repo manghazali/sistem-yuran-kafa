@@ -54,6 +54,9 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Akaun Penjaga diurus oleh pihak sekolah — sekat walaupun borang disembunyikan.
+        abort_if($request->user()->hasRole('Penjaga'), 403, 'Akaun penjaga hanya boleh dipadam oleh pihak sekolah.');
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
