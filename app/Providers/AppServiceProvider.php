@@ -10,6 +10,7 @@ use App\Models\Pelajar;
 use App\Models\Tetapan;
 use App\Observers\BayaranObserver;
 use App\Observers\PelajarObserver;
+use App\Services\BakiBulananService;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Mail\Events\MessageSent;
@@ -49,6 +50,19 @@ class AppServiceProvider extends ServiceProvider
                 'notifikasiBelumDibaca' => Notifikasi::where('user_id', auth()->id())->belumDibaca()->count(),
                 'senaraiNotifikasi' => Notifikasi::where('user_id', auth()->id())->orderByDesc('created_at')->limit(10)->get(),
             ]);
+
+            // Lencana tab "Yuran" (telefon) — bilangan item yuran belum dibayar semua anak tahun ini.
+            if (auth()->user()->hasRole('Penjaga') && ($penjaga = auth()->user()->penjaga)) {
+                $baki = app(BakiBulananService::class);
+                $tahun = now()->year;
+                $anak = $penjaga->anak()->get();
+                $prafetch = $baki->prafetch($anak->pluck('id'), $tahun);
+
+                $view->with('yuranBelumBayarCount', $anak->sum(
+                    fn ($pelajar) => $baki->senaraiBulan($pelajar, $tahun, $prafetch)
+                        ->sum(fn ($b) => $b['butiran']->where('baki', '>', 0)->count())
+                ));
+            }
         });
 
         Event::listen(Login::class, function (Login $event) {

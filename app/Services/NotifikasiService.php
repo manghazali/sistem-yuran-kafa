@@ -26,7 +26,7 @@ class NotifikasiService
             'user_id' => $penjaga->user_id,
             'judul' => $judul,
             'mesej' => $mesej,
-            'url' => Route::has('portal.kalendar') ? route('portal.kalendar', $pelajar) : null,
+            'url' => Route::has('portal.bayar-semua') ? route('portal.bayar-semua') : null,
         ]);
     }
 

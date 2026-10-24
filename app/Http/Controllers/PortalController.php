@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bayaran;
+use App\Models\Pelajar;
 use App\Models\PaymentGatewayTransaksi;
 use App\Services\BakiBulananService;
 use Illuminate\Http\Request;
@@ -42,6 +43,7 @@ class PortalController extends Controller
                 'pelajar' => $pelajar,
                 'jumlah_baki' => $bulanBelumDibayar->sum('baki'),
                 'bilangan_bulan_belum_dibayar' => $bulanBelumDibayar->count(),
+                'bilangan_yuran_belum_dibayar' => $bulanBelumDibayar->sum(fn ($b) => $b['butiran']->where('baki', '>', 0)->count()),
             ];
         });
 
@@ -54,10 +56,10 @@ class PortalController extends Controller
      * Kumpulkan semua item yuran (merentasi semua anak) tahun semasa,
      * setiap item ditanda dengan pelajar berkaitan.
      */
-    protected function semuaItemYuran(): Collection
+    protected function semuaItemYuran(?Pelajar $pelajarDipilih = null): Collection
     {
         $penjaga = $this->penjagaSemasa();
-        $anak = $penjaga->anak()->with('kelas')->get();
+        $anak = $pelajarDipilih ? collect([$pelajarDipilih]) : $penjaga->anak()->with('kelas')->get();
         $tahun = now()->year;
 
         return $anak->flatMap(function ($pelajar) use ($tahun) {
@@ -66,6 +68,23 @@ class PortalController extends Controller
                     'pelajar' => $pelajar,
                 ]));
         })->values();
+    }
+
+    /**
+     * Senarai anak penjaga semasa dan anak yang dipilih dalam dropdown (pelajar_id),
+     * hanya jika anak itu milik penjaga ini.
+     *
+     * @return array{0: Collection, 1: ?Pelajar}
+     */
+    protected function penapisAnak(Request $request): array
+    {
+        $anak = $this->penjagaSemasa()->anak()->with('kelas')->get();
+
+        $pelajarDipilih = $request->filled('pelajar_id')
+            ? $anak->firstWhere('id', (int) $request->input('pelajar_id'))
+            : null;
+
+        return [$anak, $pelajarDipilih];
     }
 
     /**
@@ -104,9 +123,10 @@ class PortalController extends Controller
     public function yuranSemua(Request $request)
     {
         [$urut, $arah] = $this->sahkanUrutan($request, ['anak', 'nama', 'status', 'amaun'], 'anak');
+        [$anak, $pelajarDipilih] = $this->penapisAnak($request);
 
         $senaraiItem = $this->paginateKoleksi(
-            $this->urutkanItemYuran($this->semuaItemYuran(), $request)->values()
+            $this->urutkanItemYuran($this->semuaItemYuran($pelajarDipilih), $request)->values()
         );
 
         return view('portal.yuran', [
@@ -114,16 +134,19 @@ class PortalController extends Controller
             'senaraiItem' => $senaraiItem,
             'urut' => $urut,
             'arah' => $arah,
+            'anak' => $anak,
+            'pelajarDipilih' => $pelajarDipilih,
         ]);
     }
 
     public function yuranBelumBayar(Request $request)
     {
         [$urut, $arah] = $this->sahkanUrutan($request, ['anak', 'nama', 'status', 'amaun'], 'anak');
+        [$anak, $pelajarDipilih] = $this->penapisAnak($request);
 
         $senaraiItem = $this->paginateKoleksi(
             $this->urutkanItemYuran(
-                $this->semuaItemYuran()->filter(fn ($item) => $item['status'] !== 'Dibayar')->values(),
+                $this->semuaItemYuran($pelajarDipilih)->filter(fn ($item) => $item['status'] !== 'Dibayar')->values(),
                 $request
             )->values()
         );
@@ -133,16 +156,19 @@ class PortalController extends Controller
             'senaraiItem' => $senaraiItem,
             'urut' => $urut,
             'arah' => $arah,
+            'anak' => $anak,
+            'pelajarDipilih' => $pelajarDipilih,
         ]);
     }
 
     public function yuranBulanan(Request $request)
     {
         [$urut, $arah] = $this->sahkanUrutan($request, ['anak', 'nama', 'status', 'amaun'], 'anak');
+        [$anak, $pelajarDipilih] = $this->penapisAnak($request);
 
         $senaraiItem = $this->paginateKoleksi(
             $this->urutkanItemYuran(
-                $this->semuaItemYuran()->filter(fn ($item) => $item['berulang'])->values(),
+                $this->semuaItemYuran($pelajarDipilih)->filter(fn ($item) => $item['berulang'])->values(),
                 $request
             )->values()
         );
@@ -152,26 +178,9 @@ class PortalController extends Controller
             'senaraiItem' => $senaraiItem,
             'urut' => $urut,
             'arah' => $arah,
+            'anak' => $anak,
+            'pelajarDipilih' => $pelajarDipilih,
         ]);
-    }
-
-    public function statusPembayaran(Request $request)
-    {
-        $penjaga = $this->penjagaSemasa();
-        $anakIds = $penjaga->anak()->pluck('id');
-
-        [$urut, $arah] = $this->sahkanUrutan($request, ['created_at', 'status', 'amaun'], 'created_at', 'desc');
-
-        $transaksi = PaymentGatewayTransaksi::whereHas(
-            'itemBayaran',
-            fn ($q) => $q->whereIn('pelajar_id', $anakIds)
-        )
-            ->with(['itemBayaran' => fn ($q) => $q->whereIn('pelajar_id', $anakIds)->with('pelajar')])
-            ->orderBy($urut, $arah)
-            ->paginate(10)
-            ->withQueryString();
-
-        return view('portal.status-pembayaran', compact('transaksi', 'urut', 'arah'));
     }
 
     public function sejarahBayaran(Request $request)
@@ -192,6 +201,13 @@ class PortalController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return view('portal.sejarah-bayaran', compact('bayaran', 'anak', 'pelajarDipilih', 'urut', 'arah'));
+        // Bayaran dalam talian yang belum disahkan gateway — dipaparkan sebagai notis supaya
+        // penjaga tahu wang mereka sedang diproses dan tidak membayar dua kali.
+        $transaksiTertunda = PaymentGatewayTransaksi::where('status', 'Menunggu')
+            ->whereHas('itemBayaran', fn ($q) => $q->whereIn('pelajar_id', $anakIds))
+            ->latest()
+            ->get();
+
+        return view('portal.sejarah-bayaran', compact('bayaran', 'anak', 'pelajarDipilih', 'urut', 'arah', 'transaksiTertunda'));
     }
 }

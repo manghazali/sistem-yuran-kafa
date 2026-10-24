@@ -112,13 +112,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/yuran/belum-bayar', [PortalController::class, 'yuranBelumBayar'])->name('portal.yuran.belum-bayar');
         Route::get('/yuran/bulanan', [PortalController::class, 'yuranBulanan'])->name('portal.yuran.bulanan');
 
-        Route::get('/status-pembayaran', [PortalController::class, 'statusPembayaran'])->name('portal.status-pembayaran');
+        Route::redirect('/status-pembayaran', '/portal/sejarah-bayaran');
 
         Route::get('/sejarah-bayaran', [PortalController::class, 'sejarahBayaran'])->name('portal.sejarah-bayaran');
+        Route::view('/bantuan', 'portal.bantuan')->name('portal.bantuan');
 
-        Route::get('/kalendar/{pelajar}', [PortalKalendarController::class, 'index'])->name('portal.kalendar');
-        Route::get('/kalendar/{pelajar}/semak', [PortalKalendarController::class, 'semak'])->name('portal.kalendar.semak');
-        Route::post('/kalendar/{pelajar}', [PortalKalendarController::class, 'bayar'])->name('portal.kalendar.bayar');
+        Route::get('/bayar', [PortalKalendarController::class, 'semuaAnak'])->name('portal.bayar-semua');
+        Route::get('/bayar/semak', [PortalKalendarController::class, 'semuaAnakSemak'])->name('portal.bayar-semua.semak');
+        Route::post('/bayar', [PortalKalendarController::class, 'semuaAnakBayar'])->name('portal.bayar-semua.bayar');
+
+        Route::get('/anak/{pelajar}', [PortalKalendarController::class, 'lihat'])->name('portal.anak');
+        // Pautan lama (cth. dalam notifikasi sedia ada) ke kalendar per anak — kini satu aliran bayar sahaja.
+        Route::redirect('/kalendar/{pelajar}', '/portal/bayar');
     });
 
     Route::get('/laporan', [LaporanController::class, 'index'])->middleware('role:Admin,Akauntan')->name('laporan.index');

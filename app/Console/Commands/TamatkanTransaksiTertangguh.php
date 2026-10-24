@@ -10,7 +10,7 @@ class TamatkanTransaksiTertangguh extends Command
 {
     protected $signature = 'payment-gateway:tamatkan-tertangguh {--jam=2 : Bilangan jam tanpa respons sebelum transaksi dianggap tamat tempoh}';
 
-    protected $description = 'Tandakan transaksi gateway pembayaran yang masih "Menunggu" selepas tempoh tertentu sebagai "Gagal" (tamat tempoh/ditinggalkan oleh Penjaga), dan maklumkan Penjaga berkenaan.';
+    protected $description = 'Tandakan transaksi gerbang pembayaran yang masih "Menunggu" selepas tempoh tertentu sebagai "Gagal" (tamat tempoh/ditinggalkan oleh Penjaga), dan maklumkan Penjaga berkenaan.';
 
     public function __construct(protected NotifikasiService $notifikasi)
     {

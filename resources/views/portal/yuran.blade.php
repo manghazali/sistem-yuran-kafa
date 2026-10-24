@@ -5,14 +5,25 @@
 
     {{-- Paparan telefon --}}
     <div class="lg:hidden">
-        <x-portal.tajuk-telefon tajuk="Yuran" :subtajuk="$tajuk" />
+        <x-portal.tajuk-telefon tajuk="Yuran" :subtajuk="$tajuk">
+            <div class="grid grid-cols-3 gap-1 rounded-full border border-gray-200 bg-white p-1 text-center text-sm font-semibold shadow-sm">
+                @foreach (['portal.yuran.semua' => 'Semua', 'portal.yuran.belum-bayar' => 'Belum Bayar', 'portal.yuran.bulanan' => 'Bulanan'] as $laluan => $label)
+                    <a href="{{ route($laluan, request()->only('pelajar_id')) }}"
+                       class="rounded-full py-2 {{ request()->routeIs($laluan) ? 'bg-green-700 text-white' : 'text-gray-600' }}">{{ $label }}</a>
+                @endforeach
+            </div>
+        </x-portal.tajuk-telefon>
 
-        <div class="mb-5 grid grid-cols-3 gap-1 rounded-full border border-gray-200 bg-white p-1 text-center text-sm font-semibold shadow-sm">
-            @foreach (['portal.yuran.semua' => 'Semua', 'portal.yuran.belum-bayar' => 'Belum Bayar', 'portal.yuran.bulanan' => 'Bulanan'] as $laluan => $label)
-                <a href="{{ route($laluan) }}"
-                   class="rounded-full py-2 {{ request()->routeIs($laluan) ? 'bg-green-700 text-white' : 'text-gray-600' }}">{{ $label }}</a>
-            @endforeach
-        </div>
+        @if ($anak->count() > 1)
+            <form method="GET" class="mb-4">
+                <x-select name="pelajar_id" onchange="this.form.submit()" class="w-full rounded-xl py-2.5 text-[15px]">
+                    <option value="">Semua Anak</option>
+                    @foreach ($anak as $pelajar)
+                        <option value="{{ $pelajar->id }}" @selected($pelajarDipilih?->id === $pelajar->id)>{{ $pelajar->nama }}</option>
+                    @endforeach
+                </x-select>
+            </form>
+        @endif
 
         <div class="space-y-3">
             @forelse ($senaraiItem as $item)

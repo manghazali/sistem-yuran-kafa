@@ -115,7 +115,7 @@ class LaporanController extends Controller
             $handle = fopen('php://output', 'w');
             fwrite($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, ['No. Bayaran', 'Pelajar', 'Kelas', 'Keterangan', 'Amaun (RM)', 'Kaedah', 'Tarikh', 'No. Rujukan', 'No. Pesanan Gateway']);
+            fputcsv($handle, ['No. Bayaran', 'Pelajar', 'Kelas', 'Keterangan', 'Amaun (RM)', 'Kaedah', 'Tarikh', 'No. Rujukan', 'No. Pesanan Gerbang Pembayaran']);
 
             $query->chunk(200, function ($kumpulan) use ($handle) {
                 foreach ($kumpulan as $item) {

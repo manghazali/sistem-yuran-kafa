@@ -268,17 +268,20 @@ class Breadcrumb extends Component
             'portal.yuran.bulanan' => [
                 ['label' => __('Yuran Bulanan'), 'route' => null],
             ],
-            'portal.status-pembayaran' => [
-                ['label' => __('Status Pembayaran'), 'route' => null],
-            ],
             'portal.sejarah-bayaran' => [
                 ['label' => __('Sejarah Bayaran'), 'route' => null],
             ],
-            'portal.kalendar' => [
-                ['label' => __('Kalendar Yuran'), 'route' => null],
+            'portal.bantuan' => [
+                ['label' => __('Bantuan'), 'route' => null],
             ],
-            'portal.kalendar.semak' => [
-                ['label' => __('Kalendar Yuran'), 'route' => 'portal.kalendar'],
+            'portal.anak' => [
+                ['label' => __('Yuran Anak'), 'route' => null],
+            ],
+            'portal.bayar-semua' => [
+                ['label' => __('Bayar Semua Yuran'), 'route' => null],
+            ],
+            'portal.bayar-semua.semak' => [
+                ['label' => __('Bayar Semua Yuran'), 'route' => 'portal.bayar-semua'],
                 ['label' => __('Semak Sebelum Bayar'), 'route' => null],
             ],
 
@@ -307,7 +310,7 @@ class Breadcrumb extends Component
             ],
             'tetapan.payment-gateway' => [
                 ['label' => __('Tetapan'), 'route' => 'tetapan.index'],
-                ['label' => __('Tetapan Gateway Pembayaran'), 'route' => null],
+                ['label' => __('Tetapan Gerbang Pembayaran'), 'route' => null],
             ],
             'tetapan.no-bayaran' => [
                 ['label' => __('Tetapan'), 'route' => 'tetapan.index'],

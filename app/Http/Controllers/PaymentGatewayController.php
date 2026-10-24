@@ -113,7 +113,7 @@ class PaymentGatewayController extends Controller
                         'no_rujukan' => $transaksi->transaction_id,
                         'no_pesanan_gateway' => $transaksi->order_id,
                         'dicatat_oleh' => null,
-                        'catatan' => 'Bayaran automatik melalui gateway pembayaran (Order: '.$transaksi->order_id.')',
+                        'catatan' => 'Bayaran automatik melalui gerbang pembayaran (Order: '.$transaksi->order_id.')',
                     ]);
 
                     foreach ($kumpulan as $item) {
@@ -157,6 +157,11 @@ class PaymentGatewayController extends Controller
             ->where('order_id', $request->input('order_id'))
             ->first();
 
-        return view('payment-gateway.selesai', compact('transaksi'));
+        // Satu Bayaran (resit) dicipta bagi setiap anak dalam transaksi yang berjaya.
+        $senaraiBayaran = $transaksi && $transaksi->status === 'Berjaya'
+            ? Bayaran::with('pelajar')->where('no_pesanan_gateway', $transaksi->order_id)->get()
+            : collect();
+
+        return view('payment-gateway.selesai', compact('transaksi', 'senaraiBayaran'));
     }
 }

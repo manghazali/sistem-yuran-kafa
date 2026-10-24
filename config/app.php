@@ -65,7 +65,9 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Waktu Malaysia (UTC+8) — masa bayaran, resit, notifikasi dan jadual
+    // (cth. peringatan hujung bulan jam 8 pagi) mengikut waktu tempatan.
+    'timezone' => env('APP_TIMEZONE', 'Asia/Kuala_Lumpur'),
 
     /*
     |--------------------------------------------------------------------------

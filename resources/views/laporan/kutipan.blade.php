@@ -81,7 +81,7 @@
                         <x-th-sortable lajur="amaun" :urut-semasa="$urut" :arah-semasa="$arah">Amaun (RM)</x-th-sortable>
                         <x-th-sortable lajur="kaedah_bayaran" :urut-semasa="$urut" :arah-semasa="$arah">Kaedah</x-th-sortable>
                         <x-th-sortable lajur="tarikh_bayaran" :urut-semasa="$urut" :arah-semasa="$arah">Tarikh</x-th-sortable>
-                        <th class="border border-gray-200 px-6 py-2 text-left text-sm font-medium text-gray-500">No. Pesanan Gateway</th>
+                        <th class="border border-gray-200 px-6 py-2 text-left text-sm font-medium text-gray-500">No. Pesanan Gerbang Pembayaran</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">

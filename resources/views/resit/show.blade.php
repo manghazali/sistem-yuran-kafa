@@ -1,23 +1,27 @@
-<x-app-layout :latar-putih="true">
+<x-app-layout :latar-putih="! auth()->user()->hasRole('Penjaga')">
     <x-slot name="header">
         <div class="flex justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Resit Rasmi') }}</h2>
-            <button onclick="window.print()" class="text-sm text-gray-600 hover:underline print:hidden">Cetak Resit</button>
+            <button onclick="document.querySelector('main')?.scrollTo(0, 0); window.print()" class="text-sm text-gray-600 hover:underline print:hidden">Cetak Resit</button>
         </div>
     </x-slot>
 
     <div class="py-4 print:py-0">
+        @role('Penjaga')
+            <x-portal.tajuk-telefon tajuk="Resit" :subtajuk="$bayaran->noResit()" :kembali="route('portal.sejarah-bayaran')" />
+        @endrole
+
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8 print:max-w-full print:px-0">
             @if (session('status'))
                 <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md print:hidden">{{ session('status') }}</div>
             @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-8 print:shadow-none print:p-0 text-gray-900">
+            <div class="bg-white overflow-hidden rounded-2xl border border-gray-200 shadow-md p-5 sm:p-8 sm:rounded-lg print:rounded-none print:border-0 print:shadow-none print:p-0 text-gray-900">
 
                 <div class="flex justify-between items-start gap-4 mb-4">
-                    <img src="{{ asset('images/logo.png') }}" alt="Logo Sekolah" class="h-32 w-32 object-contain shrink-0">
+                    <img src="{{ asset('images/logo.png') }}" alt="Logo Sekolah" class="h-20 w-20 sm:h-32 sm:w-32 print:h-32 print:w-32 object-contain shrink-0">
                     <div class="text-right">
-                        <h1 class="text-xl font-bold uppercase">{{ \App\Models\Tetapan::get('sekolah_nama', "KAFA Integrasi Darus Sa'adah") }}</h1>
+                        <h1 class="text-base sm:text-xl print:text-xl font-bold uppercase leading-tight">{{ \App\Models\Tetapan::get('sekolah_nama', "KAFA Integrasi Darus Sa'adah") }}</h1>
                         @foreach (explode("\n", \App\Models\Tetapan::get('sekolah_alamat', "Jalan DC 2/4, Desa Coalfields\n47000 Sungai Buloh\nSelangor")) as $barisAlamat)
                             <p class="text-xs text-gray-500 mt-1">{{ trim($barisAlamat) }}</p>
                         @endforeach
@@ -89,6 +93,14 @@
                     <p>Sekiranya ada sebarang pertanyaan, sila hubungi pentadbiran sekolah.</p>
                 </div>
             </div>
+
+            {{-- Telefon: header (dengan "Cetak Resit") disembunyikan, jadi butang cetak di sini --}}
+            @role('Penjaga')
+                <button type="button" onclick="document.querySelector('main')?.scrollTo(0, 0); window.print()"
+                        class="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-green-600 py-3 text-[15px] font-semibold text-white shadow-sm lg:hidden print:hidden">
+                    <i class="fas fa-print"></i> Cetak / Simpan PDF
+                </button>
+            @endrole
         </div>
     </div>
 </x-app-layout>

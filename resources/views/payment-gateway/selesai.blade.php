@@ -31,17 +31,14 @@
                     </div>
                 @endif
 
-                @if ($transaksi && $transaksi->itemBayaran->isNotEmpty())
-                    <div class="mt-6 text-left border-t pt-4">
-                        <p class="text-xs text-gray-500 uppercase mb-2">Tempoh Diliputi</p>
-                        <div class="space-y-1 text-sm">
-                            @foreach ($transaksi->itemBayaran as $item)
-                                <div class="flex justify-between">
-                                    <span>{{ $item->keterangan }} ({{ $item->pelajar->nama ?? '-' }})</span>
-                                    <span class="font-medium">RM{{ number_format($item->amaun, 2) }}</span>
-                                </div>
-                            @endforeach
-                        </div>
+                @if ($senaraiBayaran->isNotEmpty())
+                    <div class="mt-6 space-y-2">
+                        @foreach ($senaraiBayaran as $bayaran)
+                            <a href="{{ route('resit.show', $bayaran) }}"
+                               class="flex w-full items-center justify-center rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700">
+                                Lihat Resit{{ $senaraiBayaran->count() > 1 ? ' — '.($bayaran->pelajar->nama ?? '-') : '' }}
+                            </a>
+                        @endforeach
                     </div>
                 @endif
             </div>

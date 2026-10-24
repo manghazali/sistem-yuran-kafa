@@ -94,16 +94,16 @@
                 </div>
             </div>
 
-            <a href="{{ route('portal.status-pembayaran') }}"
-               class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium
-                   {{ request()->routeIs('portal.status-pembayaran') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">
-                <i class="fas fa-credit-card fa-fw"></i> {{ __('Status Pembayaran') }}
-            </a>
-
             <a href="{{ route('portal.sejarah-bayaran') }}"
                class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium
                    {{ request()->routeIs('portal.sejarah-bayaran') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">
                 <i class="fas fa-clock-rotate-left fa-fw"></i> {{ __('Sejarah Bayaran') }}
+            </a>
+
+            <a href="{{ route('portal.bantuan') }}"
+               class="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium
+                   {{ request()->routeIs('portal.bantuan') ? 'bg-green-700 text-white font-semibold' : 'text-gray-800 hover:bg-green-100 hover:text-gray-600' }}">
+                <i class="fas fa-circle-question fa-fw"></i> {{ __('Bantuan') }}
             </a>
         @endrole
 

@@ -26,7 +26,7 @@
             }
         </style>
     </head>
-    <body class="font-sans antialiased bg-gray-50 text-gray-900">
+    <body class="font-sans antialiased bg-gray-50 text-gray-900 print:bg-white">
         @php
             // Penjaga di telefon guna paparan gaya aplikasi: bar tab bawah, tiada sidebar/breadcrumb.
             $modPenjaga = auth()->user()?->hasRole('Penjaga') ?? false;
@@ -43,7 +43,7 @@
                     }
                 });
             }
-        }" x-init="init()" class="flex h-dvh overflow-hidden">
+        }" x-init="init()" class="flex h-dvh overflow-hidden print:block print:h-auto print:overflow-visible">
             <!-- Mobile Sidebar Overlay -->
             <div x-cloak x-show="sidebarOpen && window.innerWidth < 1024" @click="sidebarOpen = false" class="fixed inset-0 z-30 bg-black/50 transition-opacity" x-transition></div>
 
@@ -52,8 +52,8 @@
                 @include('layouts.navigation')
             </div>
 
-            <div class="flex min-h-0 min-w-0 flex-1 flex-col">
-                <header class="sticky z-20 border-b border-gray-200 bg-white print:hidden">
+            <div class="flex min-h-0 min-w-0 flex-1 flex-col print:block">
+                <header class="sticky z-30 border-b border-gray-200 bg-white print:hidden">
                     <div class="flex items-center justify-between px-4 sm:px-6 lg:px-8" style="height:63px;">
                         <!-- Left: Hamburger -->
                         <div class="flex items-center">
@@ -122,7 +122,7 @@
                     </div>
                 @endisset
 
-                <main class="flex-1 overflow-auto {{ $latarPutih ? 'bg-white' : 'bg-gray-50' }}">
+                <main class="flex-1 overflow-auto print:overflow-visible print:bg-white {{ $latarPutih ? 'bg-white' : 'bg-gray-50' }}">
                     <div class="px-4 sm:px-6 lg:px-4 {{ $modPenjaga ? 'pt-5 pb-28 lg:py-8' : 'py-8' }}">
                         <div class="mx-auto sm:px-6 lg:px-4">
                             {{ $slot }}
@@ -135,9 +135,9 @@
         @if ($modPenjaga)
             @php
                 $tabPenjaga = [
-                    ['route' => 'portal.index', 'aktif' => ['portal.index', 'portal.kalendar*'], 'ikon' => 'fa-house', 'label' => 'Utama'],
+                    ['route' => 'portal.index', 'aktif' => ['portal.index', 'portal.anak', 'portal.bayar-semua*', 'portal.bantuan'], 'ikon' => 'fa-house', 'label' => 'Utama'],
                     ['route' => 'portal.yuran.belum-bayar', 'aktif' => ['portal.yuran.*'], 'ikon' => 'fa-sack-dollar', 'label' => 'Yuran'],
-                    ['route' => 'portal.sejarah-bayaran', 'aktif' => ['portal.sejarah-bayaran', 'portal.status-pembayaran'], 'ikon' => 'fa-receipt', 'label' => 'Bayaran'],
+                    ['route' => 'portal.sejarah-bayaran', 'aktif' => ['portal.sejarah-bayaran'], 'ikon' => 'fa-receipt', 'label' => 'Bayaran'],
                     ['route' => 'profile.edit', 'aktif' => ['profile.*'], 'ikon' => 'fa-circle-user', 'label' => 'Akaun'],
                 ];
             @endphp
@@ -147,7 +147,14 @@
                         @php $aktif = request()->routeIs(...$tab['aktif']); @endphp
                         <a href="{{ route($tab['route']) }}"
                            class="flex flex-col items-center gap-1 py-2.5 text-xs font-medium {{ $aktif ? 'text-green-700' : 'text-gray-500' }}">
-                            <i class="fas {{ $tab['ikon'] }} text-xl"></i>
+                            <span class="relative">
+                                <i class="fas {{ $tab['ikon'] }} text-xl"></i>
+                                @if ($tab['route'] === 'portal.yuran.belum-bayar' && ($yuranBelumBayarCount ?? 0) > 0)
+                                    <span class="absolute -right-3 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[11px] font-bold leading-none text-white ring-2 ring-white">
+                                        {{ $yuranBelumBayarCount > 99 ? '99+' : $yuranBelumBayarCount }}
+                                    </span>
+                                @endif
+                            </span>
                             {{ $tab['label'] }}
                         </a>
                     @endforeach

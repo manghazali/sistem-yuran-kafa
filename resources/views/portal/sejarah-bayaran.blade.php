@@ -5,12 +5,26 @@
 
     <div class="py-2">
         <x-portal.tajuk-telefon tajuk="Bayaran" subtajuk="Sejarah bayaran dan resit" />
-        @include('portal.partials.tab-bayaran')
+
+        @if ($transaksiTertunda->isNotEmpty())
+            <div class="mb-4 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 lg:rounded-lg">
+                <p class="font-semibold">
+                    <i class="fas fa-hourglass-half mr-1"></i>
+                    {{ $transaksiTertunda->count() }} bayaran dalam talian sedang diproses
+                </p>
+                <ul class="mt-1 space-y-0.5">
+                    @foreach ($transaksiTertunda as $t)
+                        <li>RM{{ number_format($t->amaun, 2) }} · {{ $t->created_at->format('d/m/Y h:i A') }}</li>
+                    @endforeach
+                </ul>
+                <p class="mt-2 text-yellow-700">Resit akan muncul di sini sebaik sahaja bayaran disahkan. Jangan bayar semula.</p>
+            </div>
+        @endif
 
         @if ($anak->count() > 1)
             <div class="mb-4">
                 <form method="GET" class="flex gap-3">
-                    <x-select name="pelajar_id" onchange="this.form.submit()">
+                    <x-select name="pelajar_id" onchange="this.form.submit()" class="w-full rounded-xl py-2.5 text-[15px] lg:w-auto lg:rounded-md lg:py-2 lg:text-sm">
                         <option value="">Semua Anak</option>
                         @foreach ($anak as $pelajar)
                             <option value="{{ $pelajar->id }}" @selected($pelajarDipilih?->id === $pelajar->id)>{{ $pelajar->nama }}</option>
@@ -32,7 +46,7 @@
                         <p class="flex-shrink-0 text-base font-bold text-green-700">RM{{ number_format($item->amaun, 2) }}</p>
                     </div>
                     <div class="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
-                        <p class="text-xs text-gray-500">{{ $item->tarikh_bayaran?->format('d/m/Y') }} · {{ $item->no_bayaran }}</p>
+                        <p class="text-xs text-gray-500">{{ $item->tarikh_bayaran?->format('d/m/Y') }} · {{ $item->noResit() }}</p>
                         <a href="{{ route('resit.show', $item) }}" class="rounded-full bg-green-600 px-3 py-1 text-xs font-semibold text-white">Resit</a>
                     </div>
                 </div>
@@ -51,7 +65,7 @@
                 <thead class="bg-green-50">
                     <tr>
                         <th class="border border-gray-200 px-6 py-2 text-left text-sm font-medium text-gray-500">Bil.</th>
-                        <x-th-sortable lajur="no_bayaran" :urut-semasa="$urut" :arah-semasa="$arah">No. Bayaran</x-th-sortable>
+                        <x-th-sortable lajur="no_bayaran" :urut-semasa="$urut" :arah-semasa="$arah">No. Resit</x-th-sortable>
                         <th class="border border-gray-200 px-6 py-2 text-left text-sm font-medium text-gray-500">Anak</th>
                         <x-th-sortable lajur="keterangan" :urut-semasa="$urut" :arah-semasa="$arah">Keterangan</x-th-sortable>
                         <x-th-sortable lajur="amaun" :urut-semasa="$urut" :arah-semasa="$arah">Amaun (RM)</x-th-sortable>
@@ -63,7 +77,7 @@
                     @forelse ($bayaran as $item)
                         <tr>
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">{{ $loop->iteration + ($bayaran->currentPage() - 1) * $bayaran->perPage() }}</td>
-                            <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">{{ $item->no_bayaran }}</td>
+                            <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">{{ $item->noResit() }}</td>
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">{{ $item->pelajar->nama ?? '-' }}</td>
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm">{{ $item->keterangan }}</td>
                             <td class="border border-gray-200 px-6 py-2 whitespace-nowrap text-sm font-medium text-green-600">{{ number_format($item->amaun, 2) }}</td>

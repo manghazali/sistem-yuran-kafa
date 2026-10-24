@@ -42,7 +42,7 @@ class TetapanController extends Controller
 
         Tetapan::set('payment_gateway_sandbox', $request->boolean('sandbox') ? '1' : '0');
 
-        return redirect()->route('tetapan.payment-gateway')->with('status', 'Tetapan Gateway Pembayaran berjaya dikemaskini.');
+        return redirect()->route('tetapan.payment-gateway')->with('status', 'Tetapan Gerbang Pembayaran berjaya dikemaskini.');
     }
 
     public function maklumatSekolah()

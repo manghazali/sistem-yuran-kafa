@@ -18,10 +18,10 @@
                         </div>
                         <div>
                             <h4 class="font-semibold text-gray-900 group-hover:text-green-600">
-                                Gateway Pembayaran
+                                Gerbang Pembayaran
                             </h4>
                             <p class="mt-1 text-sm text-gray-500">
-                                Tetapan payment gateway
+                                Tetapan gerbang pembayaran
                             </p>
                         </div>
                     </div>

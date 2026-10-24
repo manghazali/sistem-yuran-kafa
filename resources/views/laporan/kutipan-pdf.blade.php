@@ -46,7 +46,7 @@
                 <th style="width: 9%;">Amaun (RM)</th>
                 <th style="width: 10%;">Kaedah</th>
                 <th style="width: 8%;">Tarikh</th>
-                <th style="width: 18%;">No. Pesanan Gateway</th>
+                <th style="width: 18%;">No. Pesanan Gerbang Pembayaran</th>
             </tr>
         </thead>
         <tbody>

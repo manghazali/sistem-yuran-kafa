@@ -14,7 +14,7 @@
                     <div><span class="text-gray-500">Tarikh:</span> {{ $bayaran->tarikh_bayaran?->format('d/m/Y') }}</div>
                     <div><span class="text-gray-500">No. Rujukan:</span> {{ $bayaran->no_rujukan ?? '-' }}</div>
                     @if ($bayaran->no_pesanan_gateway)
-                        <div><span class="text-gray-500">No. Pesanan Gateway (DOKU):</span> {{ $bayaran->no_pesanan_gateway }}</div>
+                        <div><span class="text-gray-500">No. Pesanan Gerbang Pembayaran (DOKU):</span> {{ $bayaran->no_pesanan_gateway }}</div>
                     @endif
                     <div><span class="text-gray-500">Dicatat oleh:</span> {{ $bayaran->pencatat->name ?? 'Sistem (Online)' }}</div>
                 </div>
