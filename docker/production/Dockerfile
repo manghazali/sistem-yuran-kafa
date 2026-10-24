@@ -37,7 +37,8 @@ RUN npm run build
 #
 # Guna varian Debian (bukan Alpine) — glibc/gcc lebih stabil untuk
 # ekstensi C++ seperti intl, dan lebih padan dengan Sail (Ubuntu/apt).
-FROM php:8.4-fpm-bookworm AS runtime
+# Dipin ke 8.4.27 — tampalan PHP2Shell (CVE-2026-109618, CVE-2026-109619).
+FROM php:8.4.27-fpm-bookworm AS runtime
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         curl gnupg ca-certificates apt-transport-https \
