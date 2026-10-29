@@ -59,7 +59,7 @@
 
             @if ($bolehBayarSemua)
                 <a href="{{ route('portal.bayar-semua') }}" class="mt-3 flex w-full items-center justify-center rounded-full bg-green-600 py-3 text-[15px] font-semibold text-white shadow-sm">
-                    Bayar Semua Yuran
+                    Bayar
                 </a>
             @endif
         </div>
@@ -111,7 +111,7 @@
             </div>
             @if ($bolehBayarSemua)
                 <a href="{{ route('portal.bayar-semua') }}" class="group inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-green-600 px-7 py-3 text-base font-semibold text-white shadow-md shadow-green-700/20 transition hover:bg-green-700">
-                    Bayar Semua Yuran
+                    Bayar
                     <i class="fas fa-arrow-right text-sm transition-transform group-hover:translate-x-1"></i>
                 </a>
             @endif

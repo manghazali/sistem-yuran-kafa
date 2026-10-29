@@ -17,7 +17,7 @@
                 'Tab Yuran menyenaraikan yuran semua anak; guna pilihan Semua Anak untuk tapis.',
             ]],
             ['ikon' => 'fa-wallet', 'tajuk' => 'Bayar yuran', 'langkah' => [
-                'Di Halaman Utama, tekan Bayar Semua Yuran.',
+                'Di Halaman Utama, tekan Bayar.',
                 'Tandakan yuran yang hendak dibayar (atau Pilih semua), kemudian Semak Sebelum Bayar.',
                 'Semak jumlah, tekan Bayar Sekarang dan selesaikan bayaran melalui FPX, kad atau e-wallet.',
             ]],
