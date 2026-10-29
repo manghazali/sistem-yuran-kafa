@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bayaran;
 use App\Models\Pelajar;
 use App\Models\Tetapan;
+use App\Services\PaymentGatewayService;
 use App\Support\EmelTemplat;
 use Illuminate\Http\Request;
 
@@ -20,8 +21,9 @@ class TetapanController extends Controller
         $merchantId = Tetapan::get('payment_gateway_merchant_id', config('payment_gateway.merchant_id'));
         $sandbox = Tetapan::get('payment_gateway_sandbox', config('payment_gateway.sandbox') ? '1' : '0');
         $secretKeySudahDitetapkan = (bool) Tetapan::get('payment_gateway_secret_key', config('payment_gateway.secret_key'));
+        $urlNotifikasi = route('payment-gateway.callback').'?token='.app(PaymentGatewayService::class)->webhookToken();
 
-        return view('tetapan.payment-gateway', compact('merchantId', 'sandbox', 'secretKeySudahDitetapkan'));
+        return view('tetapan.payment-gateway', compact('merchantId', 'sandbox', 'secretKeySudahDitetapkan', 'urlNotifikasi'));
     }
 
     public function kemaskiniPaymentGateway(Request $request)

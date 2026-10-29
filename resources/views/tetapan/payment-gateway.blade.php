@@ -49,6 +49,22 @@
                 </form>
             </div>
 
+            {{-- URL notifikasi (webhook) untuk ditampal di papan pemuka DOKU jika diperlukan. --}}
+            <div class="mt-4 bg-white overflow-hidden shadow-sm sm:rounded-lg p-6" x-data="{ disalin: false }">
+                <h3 class="font-semibold text-gray-800">URL Notifikasi</h3>
+                <p class="text-sm text-gray-500 mt-1">
+                    Sistem menghantar URL ini kepada DOKU bagi setiap bayaran. Jika papan pemuka DOKU
+                    meminta Notification URL, gunakan URL ini. Notifikasi tanpa token ini akan ditolak.
+                </p>
+                <div class="mt-3 flex gap-2">
+                    <x-text-input id="url_notifikasi" type="text" class="block w-full font-mono text-xs" value="{{ $urlNotifikasi }}" readonly />
+                    <button type="button" class="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 text-sm text-gray-700 hover:bg-gray-50"
+                            @click="navigator.clipboard.writeText(document.getElementById('url_notifikasi').value); disalin = true; setTimeout(() => disalin = false, 2000)">
+                        <i class="fas fa-copy"></i> <span x-text="disalin ? 'Disalin' : 'Salin'"></span>
+                    </button>
+                </div>
+            </div>
+
             <div class="mt-4 p-4 bg-yellow-50 text-yellow-800 text-sm rounded-md">
                 Jangan kongsi Secret Key dengan sesiapa. Sesiapa yang ada Secret Key
                 boleh jana permintaan bayaran atas nama sistem anda.

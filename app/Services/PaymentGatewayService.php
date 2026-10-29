@@ -6,6 +6,7 @@ use App\Models\PaymentGatewayTransaksi;
 use App\Models\PaymentGatewayTransaksiItem;
 use App\Models\Penjaga;
 use App\Models\Tetapan;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -84,6 +85,46 @@ class PaymentGatewayService
     }
 
     /**
+     * Sahkan header Signature pada notifikasi (webhook) daripada Doku.
+     * Komponen sama seperti permintaan keluar; Request-Target ialah laluan URL
+     * notifikasi kita. Laluan dengan dan tanpa query (?token=) kedua-duanya
+     * dicuba kerana dokumentasi Doku tidak menyatakan sama ada query disertakan.
+     */
+    public function signatureNotifikasiSah(Request $request): bool
+    {
+        $signature = (string) $request->header('Signature');
+        $requestId = (string) $request->header('Request-Id');
+        $requestTimestamp = (string) $request->header('Request-Timestamp');
+
+        if ($signature === '' || $requestId === '' || $requestTimestamp === '') {
+            return false;
+        }
+
+        $digest = $this->janaDigest($request->getContent());
+        $laluan = '/'.ltrim($request->path(), '/');
+        $sasaran = array_unique([$laluan, $request->getRequestUri()]);
+
+        foreach ($sasaran as $requestTarget) {
+            if (hash_equals($this->janaSignature($requestId, $requestTimestamp, $requestTarget, $digest), $signature)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Amaun untuk Doku: nombor bulat jika tiada sen (cth. 70), selain itu dua
+     * tempat perpuluhan (cth. 12.5) — supaya yuran bersen tidak dibundarkan.
+     */
+    public function amaunUntukDoku(float $amaun): int|float
+    {
+        $amaun = round($amaun, 2);
+
+        return floor($amaun) === $amaun ? (int) $amaun : $amaun;
+    }
+
+    /**
      * Panggil Doku Checkout API (POST /checkout/v1/payment) untuk cipta
      * satu sesi pembayaran, dan pulangkan URL Checkout Doku untuk
      * alihkan penjaga ke sana.
@@ -99,9 +140,11 @@ class PaymentGatewayService
 
         $body = [
             'order' => [
-                'amount' => (int) round($amaun),
+                'amount' => $this->amaunUntukDoku($amaun),
                 'invoice_number' => $orderId,
-                'callback_url' => $urlCallback,
+                // Butang "kembali ke merchant" pada halaman Doku — bawa penjaga ke
+                // halaman keputusan, bukan ke URL notifikasi (webhook).
+                'callback_url' => $urlSelesai,
                 'callback_url_result' => $urlSelesai,
             ],
             'payment' => [

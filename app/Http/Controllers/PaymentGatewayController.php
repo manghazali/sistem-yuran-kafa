@@ -16,8 +16,7 @@ class PaymentGatewayController extends Controller
     public function __construct(
         protected PaymentGatewayService $gateway,
         protected NotifikasiService $notifikasi
-    ) {
-    }
+    ) {}
 
     public function callback(Request $request)
     {
@@ -27,22 +26,29 @@ class PaymentGatewayController extends Controller
             'body' => $request->all(),
         ]);
 
-        $tokenDiterima = $request->query('token');
-        $tokenDijangka = $this->gateway->webhookToken();
+        // Pelayar (bukan Doku) yang sampai ke sini dibawa ke halaman keputusan.
+        if ($request->isMethod('get')) {
+            return redirect()->route('payment-gateway.selesai', ['order_id' => $request->query('order_id')]);
+        }
 
-        if ($tokenDiterima && ! hash_equals($tokenDijangka, (string) $tokenDiterima)) {
-            Log::warning('Payment gateway callback: token SALAH — kemungkinan percubaan palsu, DITOLAK.', [
+        // Token wajib — tanpanya sesiapa boleh menghantar "SUCCESS" palsu.
+        $tokenDiterima = (string) $request->query('token');
+
+        if ($tokenDiterima === '' || ! hash_equals($this->gateway->webhookToken(), $tokenDiterima)) {
+            Log::warning('Payment gateway callback: token tiada atau salah — DITOLAK.', [
                 'order_id' => $request->input('order.invoice_number'),
             ]);
 
             return response('Token tidak sah', 401);
         }
 
-        if (! $tokenDiterima) {
-            Log::warning('Payment gateway callback: token TIADA pada permintaan ini — tidak dapat sahkan sumber. '.
-                'Pastikan URL Webhook di papan pemuka Doku menggunakan URL berserta ?token= yang betul.', [
+        // Jika Doku menghantar Signature, ia mesti sah.
+        if ($request->hasHeader('Signature') && ! $this->gateway->signatureNotifikasiSah($request)) {
+            Log::warning('Payment gateway callback: Signature tidak sah — DITOLAK.', [
                 'order_id' => $request->input('order.invoice_number'),
             ]);
+
+            return response('Signature tidak sah', 401);
         }
 
         $orderId = (string) $request->input('order.invoice_number');
@@ -63,7 +69,34 @@ class PaymentGatewayController extends Controller
             return response('Order ID tidak dijumpai', 404);
         }
 
-        if ($transaksi->status !== 'Menunggu') {
+        // Sudah Berjaya: abaikan notifikasi berulang. Sudah Gagal: hanya SUCCESS
+        // yang lewat (selepas tamat tempoh 2 jam) masih diterima — wang sudah
+        // ditolak daripada penjaga, jadi bayaran mesti direkod.
+        if ($transaksi->status === 'Berjaya' || ($transaksi->status === 'Gagal' && $statusTransaksi !== 'SUCCESS')) {
+            return response('OK', 200);
+        }
+
+        $lewat = $transaksi->status === 'Gagal';
+
+        // Amaun yang dibayar mesti sama dengan amaun transaksi (jika Doku menyertakannya).
+        $amaunDibayar = $request->input('order.amount');
+
+        if ($statusTransaksi === 'SUCCESS' && $amaunDibayar === null) {
+            Log::warning('Payment gateway callback: order.amount tiada — amaun tidak dapat disemak.', ['order_id' => $orderId]);
+        }
+
+        if ($statusTransaksi === 'SUCCESS' && $amaunDibayar !== null && abs((float) $amaunDibayar - (float) $transaksi->amaun) > 0.009) {
+            Log::error('Payment gateway callback: amaun tidak sepadan — bayaran TIDAK direkod, semak secara manual.', [
+                'order_id' => $orderId,
+                'amaun_transaksi' => $transaksi->amaun,
+                'amaun_dibayar' => $amaunDibayar,
+            ]);
+
+            $transaksi->update([
+                'msg' => 'Amaun tidak sepadan (dibayar: '.($amaunDibayar ?? 'tiada').') — semak secara manual',
+                'payload_callback' => json_encode($request->all()),
+            ]);
+
             return response('OK', 200);
         }
 
@@ -75,7 +108,7 @@ class PaymentGatewayController extends Controller
             $transaksi->status = 'Berjaya';
             $transaksi->save();
 
-            DB::transaction(function () use ($transaksi) {
+            DB::transaction(function () use ($transaksi, $lewat) {
                 // SATU transaksi (walaupun merangkumi beberapa bulan sekali gus) kini
                 // direkod sebagai SATU baris Bayaran sahaja bagi setiap pelajar — bukan
                 // satu Bayaran berasingan bagi setiap bulan. Pecahan bulan disimpan pada
@@ -113,7 +146,8 @@ class PaymentGatewayController extends Controller
                         'no_rujukan' => $transaksi->transaction_id,
                         'no_pesanan_gateway' => $transaksi->order_id,
                         'dicatat_oleh' => null,
-                        'catatan' => 'Bayaran automatik melalui gerbang pembayaran (Order: '.$transaksi->order_id.')',
+                        'catatan' => 'Bayaran automatik melalui gerbang pembayaran (Order: '.$transaksi->order_id.')'
+                            .($lewat ? ' — pengesahan diterima selepas tamat tempoh' : ''),
                     ]);
 
                     foreach ($kumpulan as $item) {
