@@ -8,7 +8,7 @@ use Illuminate\Console\Command;
 
 class TamatkanTransaksiTertangguh extends Command
 {
-    protected $signature = 'payment-gateway:tamatkan-tertangguh {--jam=2 : Bilangan jam tanpa respons sebelum transaksi dianggap tamat tempoh}';
+    protected $signature = 'payment-gateway:tamatkan-tertangguh {--jam= : Bilangan jam tanpa respons sebelum transaksi dianggap tamat tempoh (lalai: PAYMENT_GATEWAY_TAMAT_JAM)}';
 
     protected $description = 'Tandakan transaksi gerbang pembayaran yang masih "Menunggu" selepas tempoh tertentu sebagai "Gagal" (tamat tempoh/ditinggalkan oleh Penjaga), dan maklumkan Penjaga berkenaan.';
 
@@ -19,7 +19,7 @@ class TamatkanTransaksiTertangguh extends Command
 
     public function handle(): int
     {
-        $jam = (int) $this->option('jam');
+        $jam = (int) ($this->option('jam') ?: config('payment_gateway.tamat_jam'));
 
         $transaksiTertangguh = PaymentGatewayTransaksi::with('itemBayaran.pelajar')
             ->where('status', 'Menunggu')

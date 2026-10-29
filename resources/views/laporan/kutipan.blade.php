@@ -17,11 +17,9 @@
                 <label class="block text-xs text-gray-500 mb-1">Kaedah Bayaran</label>
                 <x-select name="kaedah_bayaran">
                     <option value="">Semua</option>
-                    <option value="Tunai" @selected(request('kaedah_bayaran') === 'Tunai')>Tunai</option>
-                    <option value="Pindahan Bank" @selected(request('kaedah_bayaran') === 'Pindahan Bank')>Pindahan Bank</option>
-                    <option value="Cek" @selected(request('kaedah_bayaran') === 'Cek')>Cek</option>
-                    <option value="Online Banking" @selected(request('kaedah_bayaran') === 'Online Banking')>Online Banking</option>
-                    <option value="Lain-lain" @selected(request('kaedah_bayaran') === 'Lain-lain')>Lain-lain</option>
+                    @foreach (\App\Models\Bayaran::SENARAI_KAEDAH as $kaedah)
+                        <option value="{{ $kaedah }}" @selected(request('kaedah_bayaran') === $kaedah)>{{ $kaedah }}</option>
+                    @endforeach
                 </x-select>
             </div>
             <div class="w-44">

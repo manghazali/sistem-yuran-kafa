@@ -20,4 +20,10 @@ return [
     // true = guna api-sandbox.doku.com (ujian, tiada wang sebenar)
     // false = guna api.doku.com (produksi, wang sebenar)
     'sandbox' => env('PAYMENT_GATEWAY_SANDBOX', true),
+
+    // Tempoh pautan bayaran DOKU sah (minit).
+    'tempoh_bayar_minit' => (int) env('PAYMENT_GATEWAY_TEMPOH_BAYAR_MINIT', 60),
+
+    // Transaksi tanpa pengesahan selepas tempoh ini ditanda Gagal (jam).
+    'tamat_jam' => (int) env('PAYMENT_GATEWAY_TAMAT_JAM', 2),
 ];

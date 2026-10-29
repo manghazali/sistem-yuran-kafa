@@ -37,7 +37,7 @@ class LaporanController extends Controller
             ->groupBy('pelajar.darjah')
             ->pluck('jumlah', 'pelajar.darjah');
 
-        $bayaranMengikutTahun = collect(['Tahun 1', 'Tahun 2', 'Tahun 3', 'Tahun 4', 'Tahun 5', 'Tahun 6'])
+        $bayaranMengikutTahun = collect(PelajarController::SENARAI_DARJAH)
             ->map(fn ($darjah) => [
                 'label' => $darjah,
                 'jumlah' => (float) ($mengikutTahunMentah[$darjah] ?? 0),

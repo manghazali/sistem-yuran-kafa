@@ -34,12 +34,13 @@ class AppServiceProvider extends ServiceProvider
 
         $this->konfigurasiEmelDinamik();
 
-        // Had hantaran emel akaun (Guru/Penjaga) — 85 sehari, bukan 100,
+        // Had hantaran emel akaun (Guru/Penjaga) sehari — lalai 85, bukan 100,
         // supaya ada ruang selamat untuk emel transaksi lain (reset kata
         // laluan, pengesahan bayaran) pada hari yang sama tanpa lebihi had
-        // 100/hari pelan percuma Resend. Lebihan dijadualkan semula secara
-        // automatik (release) untuk hari berikutnya, bukan gagal/hilang.
-        RateLimiter::for('emel-harian', fn () => Limit::perDay(85));
+        // 100/hari pelan percuma Resend. Tukar melalui EMEL_HAD_HARIAN.
+        // Lebihan dijadualkan semula secara automatik (release) untuk hari
+        // berikutnya, bukan gagal/hilang.
+        RateLimiter::for('emel-harian', fn () => Limit::perDay(config('kafa.emel_had_harian')));
 
         View::composer('layouts.app', function ($view) {
             if (! auth()->check()) {

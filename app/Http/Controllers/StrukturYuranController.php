@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 
 class StrukturYuranController extends Controller
 {
-    public const SENARAI_DARJAH = ['Tahun 1', 'Tahun 2', 'Tahun 3', 'Tahun 4', 'Tahun 5', 'Tahun 6'];
+    public const SENARAI_DARJAH = PelajarController::SENARAI_DARJAH;
 
     public function index(Request $request)
     {

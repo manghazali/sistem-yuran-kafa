@@ -148,7 +148,7 @@ class PaymentGatewayService
                 'callback_url_result' => $urlSelesai,
             ],
             'payment' => [
-                'payment_due_date' => 60,
+                'payment_due_date' => config('payment_gateway.tempoh_bayar_minit'),
             ],
             'customer' => [
                 'name' => $namaPenuh,

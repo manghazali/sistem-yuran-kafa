@@ -44,7 +44,7 @@ class GuruAkaunNotification extends Notification implements ShouldQueue
      */
     public function retryUntil(): \DateTimeInterface
     {
-        return now()->addDays(14);
+        return now()->addDays(config('kafa.emel_cuba_hari'));
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Bayaran extends Model
 {
+    /**
+     * Kaedah bayaran yang dibenarkan. Mesti sepadan dengan enum lajur
+     * kaedah_bayaran — kaedah baharu memerlukan migration juga.
+     */
+    public const SENARAI_KAEDAH = ['Tunai', 'Pindahan Bank', 'Cek', 'Online Banking', 'Lain-lain'];
+
     protected $table = 'bayaran';
 
     protected $fillable = [

@@ -77,11 +77,9 @@
                         <div>
                             <x-input-label for="kaedah_bayaran" value="Kaedah Bayaran" />
                             <x-select id="kaedah_bayaran" name="kaedah_bayaran" class="mt-1 block w-full">
-                                <option value="Tunai" selected>Tunai</option>
-                                <option value="Pindahan Bank">Pindahan Bank</option>
-                                <option value="Cek">Cek</option>
-                                <option value="Online Banking">Online Banking</option>
-                                <option value="Lain-lain">Lain-lain</option>
+                                @foreach (\App\Models\Bayaran::SENARAI_KAEDAH as $kaedah)
+                                    <option value="{{ $kaedah }}" @selected($kaedah === 'Tunai')>{{ $kaedah }}</option>
+                                @endforeach
                             </x-select>
                             <x-input-error :messages="$errors->get('kaedah_bayaran')" class="mt-2" />
                         </div>

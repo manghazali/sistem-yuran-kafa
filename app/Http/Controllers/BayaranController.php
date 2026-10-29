@@ -100,7 +100,7 @@ class BayaranController extends Controller
             'tahun' => ['nullable', 'integer', 'min:2020', 'max:2100'],
             'keterangan' => ['nullable', 'string', 'max:255'],
             'amaun' => ['required', 'numeric', 'min:0.01'],
-            'kaedah_bayaran' => ['required', 'in:Tunai,Pindahan Bank,Cek,Online Banking,Lain-lain'],
+            'kaedah_bayaran' => ['required', 'in:'.implode(',', Bayaran::SENARAI_KAEDAH)],
             'tarikh_bayaran' => ['required', 'date'],
             'no_rujukan' => ['nullable', 'string', 'max:100'],
             'catatan' => ['nullable', 'string'],

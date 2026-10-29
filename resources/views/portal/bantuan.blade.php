@@ -34,7 +34,7 @@
 
         $soalan = [
             ['s' => 'Saya sudah bayar tetapi resit belum muncul?',
-             'j' => 'Bayaran mungkin masih diproses oleh gerbang pembayaran. Notis kuning akan dipaparkan di tab Bayaran. Tunggu sebentar dan jangan bayar semula. Jika resit masih tiada selepas 3 jam, hubungi pihak sekolah dengan tarikh dan amaun bayaran.'],
+             'j' => 'Bayaran mungkin masih diproses oleh gerbang pembayaran. Notis kuning akan dipaparkan di tab Bayaran. Tunggu sebentar dan jangan bayar semula. Jika resit masih tiada selepas '.config('payment_gateway.tamat_jam').' jam, hubungi pihak sekolah dengan tarikh dan amaun bayaran.'],
             ['s' => 'Bayaran gagal atau saya batalkan, adakah wang saya ditolak?',
              'j' => 'Bayaran yang gagal atau dibatalkan tidak dikenakan caj. Jika bank anda menunjukkan wang telah ditolak, hubungi pihak sekolah dengan tarikh dan amaun bayaran untuk disemak.'],
             ['s' => 'Boleh saya bayar secara tunai?',

@@ -55,7 +55,7 @@ class HantarPeringatanBakiTertunggak extends Command
                 ->where('judul', 'Peringatan Baki Tertunggak')
                 ->where('mesej', 'like', '%'.$satu->nama.'%')
                 ->whereNull('dibaca_pada')
-                ->where('created_at', '>=', now()->subDays(6))
+                ->where('created_at', '>=', now()->subDays(config('kafa.peringatan_selang_hari')))
                 ->exists();
 
             if ($sudahDihantarBaruBaru) {
