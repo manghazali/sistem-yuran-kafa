@@ -36,7 +36,7 @@
             ['s' => 'Saya sudah bayar tetapi resit belum muncul?',
              'j' => 'Bayaran mungkin masih diproses oleh gerbang pembayaran. Notis kuning akan dipaparkan di tab Bayaran. Tunggu sebentar dan jangan bayar semula. Jika resit masih tiada selepas '.config('payment_gateway.tamat_jam').' jam, hubungi pihak sekolah dengan tarikh dan amaun bayaran.'],
             ['s' => 'Bayaran gagal atau saya batalkan, adakah wang saya ditolak?',
-             'j' => 'Bayaran yang gagal atau dibatalkan tidak dikenakan caj. Jika bank anda menunjukkan wang telah ditolak, hubungi pihak sekolah dengan tarikh dan amaun bayaran untuk disemak.'],
+             'j' => 'Bayaran yang gagal atau dibatalkan tidak diterima oleh sekolah. Jika bank anda menunjukkan wang telah ditolak, wang itu biasanya dipulangkan secara automatik oleh bank anda dalam beberapa hari bekerja. Jika tidak, hubungi pihak sekolah dengan tarikh, amaun dan nombor rujukan bank untuk disemak.'],
             ['s' => 'Boleh saya bayar secara tunai?',
              'j' => 'Boleh. Bayar di kaunter sekolah atau kepada guru kelas. Bayaran akan direkodkan oleh pihak sekolah dan resit akan muncul di tab Bayaran.'],
             ['s' => 'Jumlah yuran salah atau anak saya tidak tersenarai?',

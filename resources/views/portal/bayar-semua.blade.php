@@ -1,10 +1,10 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Bayar Yuran Semua Anak') }} ({{ $tahun }})</h2>
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">{{ __('Bayar Yuran Semua Anak') }}</h2>
     </x-slot>
 
     <div class="py-2">
-        <x-portal.tajuk-telefon tajuk="Bayar Semua Anak" :subtajuk="'Satu bayaran untuk semua anak · '.$tahun" />
+        <x-portal.tajuk-telefon tajuk="Bayar Semua Anak" subtajuk="Satu bayaran untuk semua anak" />
 
         @if (session('status'))
             <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-md">{{ session('status') }}</div>
@@ -39,14 +39,22 @@
                                     @foreach ($b['butiran'] as $item)
                                         @if ($item['baki'] > 0)
                                             @php
-                                                $warna = $item['status'] === 'Sebahagian' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
+                                                // Sedang dibayar dalam talian: tidak boleh dipilih sehingga keputusan diterima.
+                                                $diproses = $sedangDiproses->contains("{$pelajar->id}:{$b['tahun']}:{$b['bulan']}:{$item['id']}");
+                                                $warna = match (true) {
+                                                    $diproses => 'bg-blue-100 text-blue-800',
+                                                    $item['status'] === 'Sebahagian' => 'bg-yellow-100 text-yellow-800',
+                                                    default => 'bg-red-100 text-red-800',
+                                                };
+                                                // Yuran sekali bayar tahun lepas: nyatakan tahun (yuran bulanan sudah ada tahun pada nama).
+                                                $nama = $b['tahun'] < $tahun && ! $item['berulang'] ? $item['nama'].' ('.$b['tahun'].')' : $item['nama'];
                                             @endphp
-                                            <label class="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-gray-50">
-                                                <input type="checkbox" name="item[]" value="{{ $pelajar->id }}:{{ $b['bulan'] }}:{{ $item['id'] }}"
-                                                       class="h-5 w-5 rounded border-gray-300 text-green-600 lg:h-4 lg:w-4 item-checkbox" data-amaun="{{ $item['baki'] }}">
+                                            <label class="flex items-center gap-3 px-4 py-3 {{ $diproses ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:bg-gray-50' }}">
+                                                <input type="checkbox" name="item[]" value="{{ $pelajar->id }}:{{ $b['tahun'] }}:{{ $b['bulan'] }}:{{ $item['id'] }}" @disabled($diproses)
+                                                       class="h-5 w-5 rounded border-gray-300 text-green-600 lg:h-4 lg:w-4 {{ $diproses ? '' : 'item-checkbox' }}" data-amaun="{{ $item['baki'] }}">
                                                 <div class="min-w-0 flex-1">
-                                                    <p class="text-sm font-medium">{{ $item['nama'] }}</p>
-                                                    <span class="mt-1 inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs {{ $warna }}">{{ $item['status'] }}</span>
+                                                    <p class="text-sm font-medium">{{ $nama }}</p>
+                                                    <span class="mt-1 inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-xs {{ $warna }}">{{ $diproses ? 'Sedang diproses' : $item['status'] }}</span>
                                                 </div>
                                                 <span class="text-sm font-semibold">RM{{ number_format($item['baki'], 2) }}</span>
                                             </label>

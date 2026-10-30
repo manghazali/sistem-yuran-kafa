@@ -2,16 +2,18 @@
 
 namespace App\Services;
 
+use App\Exceptions\GerbangPembayaranTidakTersedia;
 use App\Models\PaymentGatewayTransaksi;
 use App\Models\PaymentGatewayTransaksiItem;
 use App\Models\Penjaga;
 use App\Models\Tetapan;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class PaymentGatewayService
 {
@@ -64,14 +66,15 @@ class PaymentGatewayService
     /**
      * Bina komponen tandatangan (Signature) mengikut format rasmi Doku:
      * satu komponen setiap baris, dipisah "\n", HMAC-SHA256 base64.
+     * Permintaan GET (tiada badan) tidak menyertakan komponen Digest.
      */
-    public function janaSignature(string $requestId, string $requestTimestamp, string $requestTarget, string $digest): string
+    public function janaSignature(string $requestId, string $requestTimestamp, string $requestTarget, ?string $digest): string
     {
         $komponen = "Client-Id:{$this->merchantId()}\n".
             "Request-Id:{$requestId}\n".
             "Request-Timestamp:{$requestTimestamp}\n".
-            "Request-Target:{$requestTarget}\n".
-            "Digest:{$digest}";
+            "Request-Target:{$requestTarget}".
+            ($digest !== null ? "\nDigest:{$digest}" : '');
 
         return 'HMACSHA256='.base64_encode(hash_hmac('sha256', $komponen, $this->secretKey(), true));
     }
@@ -166,21 +169,72 @@ class PaymentGatewayService
         $requestTimestamp = now()->utc()->format('Y-m-d\TH:i:s\Z');
         $signature = $this->janaSignature($requestId, $requestTimestamp, $requestTarget, $digest);
 
-        $response = Http::withHeaders([
-            'Client-Id' => $this->merchantId(),
-            'Request-Id' => $requestId,
-            'Request-Timestamp' => $requestTimestamp,
-            'Signature' => $signature,
-        ])->withBody($jsonBody, 'application/json')
-            ->post($this->urlAsas().ltrim($requestTarget, '/'));
+        try {
+            // Had masa supaya penjaga tidak menunggu lama jika DOKU lambat.
+            $response = Http::timeout(20)->withHeaders([
+                'Client-Id' => $this->merchantId(),
+                'Request-Id' => $requestId,
+                'Request-Timestamp' => $requestTimestamp,
+                'Signature' => $signature,
+            ])->withBody($jsonBody, 'application/json')
+                ->post($this->urlAsas().ltrim($requestTarget, '/'));
+        } catch (ConnectionException $e) {
+            throw new GerbangPembayaranTidakTersedia('Doku tidak dapat dihubungi: '.$e->getMessage(), 0, $e);
+        }
 
         $urlBayaran = $response->json('response.payment.url');
 
         if (! $response->successful() || ! $urlBayaran) {
-            throw new RuntimeException('Gagal cipta pembayaran Doku: '.$response->status().' '.$response->body());
+            throw new GerbangPembayaranTidakTersedia('Gagal cipta pembayaran Doku: '.$response->status().' '.Str::limit($response->body(), 500));
         }
 
         return $urlBayaran;
+    }
+
+    /**
+     * Tanya DOKU status terkini sesuatu pesanan (Check Status API).
+     *
+     * @return array{status: string, rujukan: ?string, amaun: mixed, payload: array}|null
+     *                                                                                    null jika DOKU tidak dapat dihubungi atau jawapan tidak difahami;
+     *                                                                                    status 'NOT_FOUND' jika DOKU tiada rekod pesanan ini.
+     */
+    public function semakStatus(string $orderId): ?array
+    {
+        $requestTarget = '/orders/v1/status/'.rawurlencode($orderId);
+        $requestId = (string) Str::uuid();
+        $requestTimestamp = now()->utc()->format('Y-m-d\TH:i:s\Z');
+
+        try {
+            $response = Http::timeout(20)->withHeaders([
+                'Client-Id' => $this->merchantId(),
+                'Request-Id' => $requestId,
+                'Request-Timestamp' => $requestTimestamp,
+                'Signature' => $this->janaSignature($requestId, $requestTimestamp, $requestTarget, null),
+            ])->get($this->urlAsas().ltrim($requestTarget, '/'));
+        } catch (ConnectionException $e) {
+            Log::warning('Payment gateway: semakan status gagal dihubungi', ['order_id' => $orderId, 'ralat' => $e->getMessage()]);
+
+            return null;
+        }
+
+        if ($response->status() === 404) {
+            return ['status' => 'NOT_FOUND', 'rujukan' => null, 'amaun' => null, 'payload' => (array) $response->json()];
+        }
+
+        $status = $response->json('transaction.status');
+
+        if (! $response->successful() || ! $status) {
+            Log::warning('Payment gateway: semakan status tidak berjaya', ['order_id' => $orderId, 'http' => $response->status(), 'badan' => Str::limit($response->body(), 500)]);
+
+            return null;
+        }
+
+        return [
+            'status' => (string) $status,
+            'rujukan' => $response->json('transaction.reference_number') ?: null,
+            'amaun' => $response->json('order.amount'),
+            'payload' => (array) $response->json(),
+        ];
     }
 
     /**
@@ -189,9 +243,10 @@ class PaymentGatewayService
     public function mulakanTransaksiItem(Collection $senaraiItem, Penjaga $penjaga, string $emel, string $telefon): string
     {
         $jumlahKeseluruhan = $senaraiItem->sum('baki');
-        $orderId = 'KAFA'.$penjaga->id.'-'.now()->format('YmdHis');
+        // Akhiran rawak supaya dua tekanan dalam saat yang sama tidak bertembung.
+        $orderId = 'KAFA'.$penjaga->id.'-'.now()->format('YmdHis').'-'.Str::upper(Str::random(4));
 
-        DB::transaction(function () use ($senaraiItem, $jumlahKeseluruhan, $orderId) {
+        $transaksi = DB::transaction(function () use ($senaraiItem, $jumlahKeseluruhan, $orderId) {
             $transaksi = PaymentGatewayTransaksi::create([
                 'order_id' => $orderId,
                 'amaun' => $jumlahKeseluruhan,
@@ -209,8 +264,19 @@ class PaymentGatewayService
                     'amaun' => $p['baki'],
                 ]);
             }
+
+            return $transaksi;
         });
 
-        return $this->ciptaPembayaran($orderId, (float) $jumlahKeseluruhan, $penjaga->nama, $emel, $telefon);
+        try {
+            return $this->ciptaPembayaran($orderId, (float) $jumlahKeseluruhan, $penjaga->nama, $emel, $telefon);
+        } catch (GerbangPembayaranTidakTersedia $e) {
+            // Penjaga belum dibawa ke DOKU, jadi tiada caj — tutup transaksi terus
+            // supaya tidak tersangkut "Menunggu" (notis kuning dan notifikasi tamat tempoh).
+            Log::error('Payment gateway: gagal cipta pembayaran', ['order_id' => $orderId, 'ralat' => $e->getMessage()]);
+            $transaksi->update(['status' => 'Gagal', 'msg' => Str::limit('Gerbang pembayaran tidak tersedia: '.$e->getMessage(), 250)]);
+
+            throw $e;
+        }
     }
 }

@@ -19,7 +19,7 @@
         <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-700 to-green-500 px-5 py-4 text-white shadow-lg shadow-green-700/20">
             <div class="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-white/10"></div>
             <div class="relative">
-                <p class="text-xs font-semibold uppercase tracking-wider text-green-100">Baki belum dibayar · {{ now()->year }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-green-100">Baki belum dibayar</p>
                 <p class="text-3xl font-bold">RM{{ number_format($jumlahKeseluruhanBaki, 2) }}</p>
 
                 <div class="mt-3 grid grid-cols-2 divide-x divide-white/25 border-t border-white/25 pt-2">

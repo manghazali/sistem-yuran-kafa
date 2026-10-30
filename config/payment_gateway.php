@@ -24,6 +24,10 @@ return [
     // Tempoh pautan bayaran DOKU sah (minit).
     'tempoh_bayar_minit' => (int) env('PAYMENT_GATEWAY_TEMPOH_BAYAR_MINIT', 60),
 
-    // Transaksi tanpa pengesahan selepas tempoh ini ditanda Gagal (jam).
+    // Selepas tempoh ini (jam) tanpa keputusan, sistem bertanya status kepada DOKU.
     'tamat_jam' => (int) env('PAYMENT_GATEWAY_TAMAT_JAM', 2),
+
+    // Jika DOKU masih belum memberi keputusan muktamad (cth. PENDING atau tidak
+    // dapat dihubungi) selepas tempoh ini (jam), transaksi ditanda Gagal.
+    'tamat_akhir_jam' => (int) env('PAYMENT_GATEWAY_TAMAT_AKHIR_JAM', 24),
 ];

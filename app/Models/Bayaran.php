@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Bayaran extends Model
 {
@@ -77,6 +78,22 @@ class Bayaran extends Model
     }
 
     /**
+     * Naikkan nombor turutan tersimpan dengan baris dikunci, supaya dua bayaran
+     * serentak tidak mendapat nombor yang sama.
+     */
+    protected static function nomborSeterusnya(string $kunci): int
+    {
+        return DB::transaction(function () use ($kunci) {
+            $rekod = Tetapan::where('kunci', $kunci)->lockForUpdate()->first();
+            $nomborBaharu = (int) ($rekod?->nilai ?: 0) + 1;
+
+            Tetapan::set($kunci, (string) $nomborBaharu);
+
+            return $nomborBaharu;
+        });
+    }
+
+    /**
      * Jana No. Bayaran SEBENAR mengikut format/tahun/nombor-turutan di Tetapan >
      * Generate No. Bayaran, dan naikkan nombor turutan tersimpan. Dipanggil
      * sekali bagi SETIAP Bayaran dicipta (satu baris = satu rekod bayaran).
@@ -85,10 +102,7 @@ class Bayaran extends Model
     {
         $format = Tetapan::get('no_bayaran_format', 'BYR/{TAHUN}/{NOMBOR}');
         $tahun = (int) Tetapan::get('no_bayaran_tahun', now()->year);
-        $nomborSemasa = (int) Tetapan::get('no_bayaran_nombor_semasa', 0);
-        $nomborBaharu = $nomborSemasa + 1;
-
-        Tetapan::set('no_bayaran_nombor_semasa', (string) $nomborBaharu);
+        $nomborBaharu = static::nomborSeterusnya('no_bayaran_nombor_semasa');
 
         return static::formatNombor($format, $tahun, $nomborBaharu);
     }
@@ -102,10 +116,7 @@ class Bayaran extends Model
     {
         $format = Tetapan::get('no_resit_format', 'RESIT/{TAHUN}/{NOMBOR}');
         $tahun = (int) Tetapan::get('no_resit_tahun', now()->year);
-        $nomborSemasa = (int) Tetapan::get('no_resit_nombor_semasa', 0);
-        $nomborBaharu = $nomborSemasa + 1;
-
-        Tetapan::set('no_resit_nombor_semasa', (string) $nomborBaharu);
+        $nomborBaharu = static::nomborSeterusnya('no_resit_nombor_semasa');
 
         return static::formatNombor($format, $tahun, $nomborBaharu);
     }

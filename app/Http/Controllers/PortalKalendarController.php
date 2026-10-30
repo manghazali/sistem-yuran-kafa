@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\GerbangPembayaranTidakTersedia;
+use App\Models\PaymentGatewayTransaksiItem;
 use App\Models\Pelajar;
 use App\Models\Penjaga;
 use App\Services\BakiBulananService;
@@ -15,8 +17,7 @@ class PortalKalendarController extends Controller
     public function __construct(
         protected PaymentGatewayService $gateway,
         protected BakiBulananService $bakiService
-    ) {
-    }
+    ) {}
 
     protected function sahkanMilikPenjaga(Pelajar $pelajar)
     {
@@ -28,27 +29,22 @@ class PortalKalendarController extends Controller
     }
 
     /**
-     * Terjemah pilihan item (nilai checkbox "bulan:tetapan_yuran_pelajar_id") kepada
-     * subjumlah setiap bulan — hanya jumlah item yang dipilih, bukan baki keseluruhan bulan.
+     * Terjemah pilihan item bagi seorang pelajar kepada subjumlah setiap bulan —
+     * hanya item yang dipilih, masih ada baki, dan tidak sedang dibayar dalam talian.
      *
-     * @param  array<int, string>  $pilihanItem
+     * @param  Collection<int, array{0: int, 1: int, 2: int}>  $pilihan  [tahun, bulan, tetapan_yuran_pelajar_id]
+     * @param  Collection<int, string>  $sedangDiproses  kunci "pelajar:tahun:bulan:id"
      */
-    protected function kumpulPilihanItem(Pelajar $pelajar, array $pilihanItem, int $tahun): Collection
+    protected function kumpulPilihanItem(Pelajar $pelajar, Collection $pilihan, Collection $sedangDiproses): Collection
     {
-        $senaraiBulan = $this->bakiService->senaraiBulan($pelajar, $tahun);
+        $kunciTerpilih = $pilihan->map(fn ($p) => implode(':', $p))->flip();
 
-        $idTerpilihMengikutBulan = collect($pilihanItem)
-            ->map(fn ($nilai) => explode(':', $nilai, 2))
-            ->filter(fn ($bahagian) => count($bahagian) === 2)
-            ->groupBy(fn ($bahagian) => (int) $bahagian[0])
-            ->map(fn ($kumpulan) => $kumpulan->map(fn ($bahagian) => (int) $bahagian[1]));
-
-        return $senaraiBulan
-            ->map(function ($b) use ($idTerpilihMengikutBulan) {
-                $idTerpilih = $idTerpilihMengikutBulan->get($b['bulan'], collect());
-
+        return $this->bakiService->bulanBelumBayar($pelajar)
+            ->map(function ($b) use ($pelajar, $kunciTerpilih, $sedangDiproses) {
                 $butiranTerpilih = $b['butiran']
-                    ->filter(fn ($item) => $idTerpilih->contains($item['id']) && $item['baki'] > 0)
+                    ->filter(fn ($item) => $kunciTerpilih->has("{$b['tahun']}:{$b['bulan']}:{$item['id']}")
+                        && $item['baki'] > 0
+                        && ! $sedangDiproses->contains("{$pelajar->id}:{$b['tahun']}:{$b['bulan']}:{$item['id']}"))
                     ->values();
 
                 if ($butiranTerpilih->isEmpty()) {
@@ -65,27 +61,46 @@ class PortalKalendarController extends Controller
     }
 
     /**
-     * Pilihan merentasi semua anak (nilai checkbox "pelajar_id:bulan:tetapan_yuran_pelajar_id").
+     * Pilihan merentasi semua anak (nilai checkbox "pelajar_id:tahun:bulan:tetapan_yuran_pelajar_id").
      * Hanya anak milik penjaga semasa diambil kira; nilai untuk pelajar lain diabaikan.
      *
      * @param  array<int, string>  $pilihanItem
      * @return Collection<int, array{pelajar: Pelajar, bulan: Collection}>
      */
-    protected function kumpulPilihanSemuaAnak(Penjaga $penjaga, array $pilihanItem, int $tahun): Collection
+    protected function kumpulPilihanSemuaAnak(Penjaga $penjaga, array $pilihanItem): Collection
     {
         $pilihanMengikutPelajar = collect($pilihanItem)
-            ->map(fn ($nilai) => explode(':', $nilai, 2))
-            ->filter(fn ($bahagian) => count($bahagian) === 2)
-            ->groupBy(fn ($bahagian) => (int) $bahagian[0])
-            ->map(fn ($kumpulan) => $kumpulan->map(fn ($bahagian) => $bahagian[1])->all());
+            ->map(fn ($nilai) => array_map('intval', explode(':', $nilai)))
+            ->filter(fn ($bahagian) => count($bahagian) === 4)
+            ->groupBy(fn ($bahagian) => $bahagian[0])
+            ->map(fn ($kumpulan) => $kumpulan->map(fn ($bahagian) => array_slice($bahagian, 1)));
 
-        return $penjaga->anak()->with('kelas')->get()
+        $anak = $penjaga->anak()->with('kelas')->get();
+        $sedangDiproses = $this->itemSedangDiproses($anak->pluck('id'));
+
+        return $anak
             ->filter(fn ($pelajar) => $pilihanMengikutPelajar->has($pelajar->id))
             ->map(fn ($pelajar) => [
                 'pelajar' => $pelajar,
-                'bulan' => $this->kumpulPilihanItem($pelajar, $pilihanMengikutPelajar->get($pelajar->id), $tahun),
+                'bulan' => $this->kumpulPilihanItem($pelajar, $pilihanMengikutPelajar->get($pelajar->id), $sedangDiproses),
             ])
             ->filter(fn ($kumpulan) => $kumpulan['bulan']->isNotEmpty())
+            ->values();
+    }
+
+    /**
+     * Item yang sedang dibayar dalam talian (transaksi masih "Menunggu") — tidak boleh
+     * dipilih semula sehingga keputusan diterima, supaya tidak dibayar dua kali.
+     *
+     * @return Collection<int, string> kunci "pelajar:tahun:bulan:tetapan_yuran_pelajar_id"
+     */
+    protected function itemSedangDiproses(Collection $pelajarId): Collection
+    {
+        return PaymentGatewayTransaksiItem::whereIn('pelajar_id', $pelajarId)
+            ->whereHas('transaksi', fn ($q) => $q->where('status', 'Menunggu'))
+            ->get()
+            ->map(fn ($i) => "{$i->pelajar_id}:{$i->tahun}:{$i->bulan}:{$i->tetapan_yuran_pelajar_id}")
+            ->unique()
             ->values();
     }
 
@@ -101,16 +116,19 @@ class PortalKalendarController extends Controller
     {
         $penjaga = $this->penjagaSemasa();
         $tahun = now()->year;
+        $anak = $penjaga->anak()->with('kelas')->get();
+        $sedangDiproses = $this->itemSedangDiproses($anak->pluck('id'));
 
-        $senaraiAnak = $penjaga->anak()->with('kelas')->get()
+        // Termasuk tunggakan tahun lepas (lihat BakiBulananService::tahunBolehBayar()).
+        $senaraiAnak = $anak
             ->map(fn ($pelajar) => [
                 'pelajar' => $pelajar,
-                'bulan' => $this->bakiService->senaraiBulan($pelajar, $tahun),
+                'bulan' => $this->bakiService->bulanBelumBayar($pelajar),
             ])
-            ->filter(fn ($kumpulan) => $kumpulan['bulan']->contains(fn ($b) => $b['baki'] > 0))
+            ->filter(fn ($kumpulan) => $kumpulan['bulan']->isNotEmpty())
             ->values();
 
-        return view('portal.bayar-semua', compact('senaraiAnak', 'tahun'));
+        return view('portal.bayar-semua', compact('senaraiAnak', 'tahun', 'sedangDiproses'));
     }
 
     public function semuaAnakSemak(Request $request)
@@ -124,11 +142,11 @@ class PortalKalendarController extends Controller
             'item.required' => 'Sila pilih sekurang-kurangnya satu yuran untuk dibayar.',
         ]);
 
-        $senaraiSemakan = $this->kumpulPilihanSemuaAnak($penjaga, $validated['item'], now()->year);
+        $senaraiSemakan = $this->kumpulPilihanSemuaAnak($penjaga, $validated['item']);
 
         if ($senaraiSemakan->isEmpty()) {
             return redirect()->route('portal.bayar-semua')
-                ->with('status', 'Yuran yang dipilih sudah dibayar atau tiada yuran berkaitan.');
+                ->with('status', 'Yuran yang dipilih sudah dibayar, sedang diproses atau tiada yuran berkaitan.');
         }
 
         $jumlahKeseluruhan = $senaraiSemakan->sum(fn ($k) => $k['bulan']->sum('baki'));
@@ -148,7 +166,7 @@ class PortalKalendarController extends Controller
         ]);
 
         // Satu transaksi untuk semua anak; webhook memecahkannya kepada satu resit bagi setiap anak.
-        $senaraiItem = $this->kumpulPilihanSemuaAnak($penjaga, $validated['item'], now()->year)
+        $senaraiItem = $this->kumpulPilihanSemuaAnak($penjaga, $validated['item'])
             ->flatMap(fn ($k) => $k['bulan']->flatMap(fn ($b) => $b['butiran']->map(fn ($item) => [
                 'pelajar_id' => $k['pelajar']->id,
                 'nama_pelajar' => $k['pelajar']->nama,
@@ -163,15 +181,21 @@ class PortalKalendarController extends Controller
 
         if ($senaraiItem->isEmpty()) {
             return redirect()->route('portal.bayar-semua')
-                ->with('status', 'Yuran yang dipilih sudah dibayar atau tiada yuran berkaitan.');
+                ->with('status', 'Yuran yang dipilih sudah dibayar, sedang diproses atau tiada yuran berkaitan.');
         }
 
-        $url = $this->gateway->mulakanTransaksiItem(
-            $senaraiItem,
-            $penjaga,
-            $penjaga->email ?: Auth::user()->email,
-            $penjaga->no_telefon ?: '0100000000'
-        );
+        try {
+            $url = $this->gateway->mulakanTransaksiItem(
+                $senaraiItem,
+                $penjaga,
+                $penjaga->email ?: Auth::user()->email,
+                $penjaga->no_telefon ?: '0100000000'
+            );
+        } catch (GerbangPembayaranTidakTersedia) {
+            // Kembali ke halaman semakan dengan pilihan yang sama supaya penjaga boleh cuba semula.
+            return redirect()->route('portal.bayar-semua.semak', ['item' => $validated['item']])
+                ->with('ralat', 'Gerbang pembayaran tidak dapat dihubungi buat masa ini. Tiada caj dikenakan. Sila cuba sebentar lagi.');
+        }
 
         return redirect()->away($url);
     }

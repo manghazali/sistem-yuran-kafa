@@ -7,6 +7,13 @@
         <x-portal.tajuk-telefon tajuk="Semak Sebelum Bayar" subtajuk="Semua anak" :kembali="route('portal.bayar-semua')" />
 
         <div class="space-y-4">
+            @if (session('ralat'))
+                <div class="flex gap-3 p-4 bg-red-50 text-red-800 text-sm rounded-md">
+                    <i class="fas fa-circle-exclamation mt-0.5"></i>
+                    <span>{{ session('ralat') }}</span>
+                </div>
+            @endif
+
             <div class="p-4 bg-blue-50 text-blue-800 text-sm rounded-md">
                 Sila semak butiran di bawah. Tiada apa-apa dicaj lagi — anda akan
                 dibawa ke gerbang pembayaran untuk bayar selepas sahkan di sini.
@@ -46,16 +53,18 @@
             </div>
 
             <div class="flex lg:justify-end">
-                <form method="POST" action="{{ route('portal.bayar-semua.bayar') }}" class="w-full lg:w-auto">
+                {{-- Elak tekan dua kali: butang dimatikan sebaik borang dihantar --}}
+                <form method="POST" action="{{ route('portal.bayar-semua.bayar') }}" class="w-full lg:w-auto"
+                      x-data="{ dihantar: false }" @submit="dihantar = true">
                     @csrf
                     @foreach ($senaraiSemakan as $kumpulan)
                         @foreach ($kumpulan['bulan'] as $b)
                             @foreach ($b['butiran'] as $item)
-                                <input type="hidden" name="item[]" value="{{ $kumpulan['pelajar']->id }}:{{ $b['bulan'] }}:{{ $item['id'] }}">
+                                <input type="hidden" name="item[]" value="{{ $kumpulan['pelajar']->id }}:{{ $b['tahun'] }}:{{ $b['bulan'] }}:{{ $item['id'] }}">
                             @endforeach
                         @endforeach
                     @endforeach
-                    <button type="submit" class="w-full rounded-full px-6 py-3 bg-green-600 text-white font-semibold hover:bg-green-700 lg:w-auto lg:rounded-md lg:font-medium">
+                    <button type="submit" :disabled="dihantar" :class="dihantar && 'opacity-60'" class="w-full rounded-full px-6 py-3 bg-green-600 text-white font-semibold hover:bg-green-700 lg:w-auto lg:rounded-md lg:font-medium">
                         Bayar Sekarang — RM{{ number_format($jumlahKeseluruhan, 2) }}
                     </button>
                 </form>

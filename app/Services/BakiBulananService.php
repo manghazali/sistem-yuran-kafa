@@ -53,10 +53,10 @@ class BakiBulananService
 
     /**
      * @param  array{tetapan: Collection, dibayarTepat: Collection, kolam: Collection}|null  $prafetch
-     *                                                                                        Jika diberi (cth: hasil prafetch() dipanggil sekali untuk ramai pelajar), guna data itu
-     *                                                                                        terus tanpa query tambahan. Jika tiada, query seperti biasa untuk pelajar ini sahaja.
+     *                                                                                                  Jika diberi (cth: hasil prafetch() dipanggil sekali untuk ramai pelajar), guna data itu
+     *                                                                                                  terus tanpa query tambahan. Jika tiada, query seperti biasa untuk pelajar ini sahaja.
      */
-    public function senaraiBulan(Pelajar $pelajar, int $tahun, ?array $prafetch = null): Collection
+    public function senaraiBulan(Pelajar $pelajar, int $tahun, ?array $prafetch = null, bool $sejakDitetapkan = false): Collection
     {
         if ($prafetch) {
             $tetapanAktif = $prafetch['tetapan']->get($pelajar->id, collect());
@@ -108,10 +108,17 @@ class BakiBulananService
             // Tiada bulan_berkenaan (kategori lain): dikenakan SEKALI sahaja,
             //   pada bulan created_at tetapan ini (bulan ia DICIPTA — cth:
             //   yuran pendaftaran dikenakan pada bulan pelajar didaftarkan).
-            $tetapanTerpakai = $tetapanAktif->filter(function ($t) use ($bulan, $awalBulan, $akhirBulan) {
+            $tetapanTerpakai = $tetapanAktif->filter(function ($t) use ($bulan, $awalBulan, $akhirBulan, $sejakDitetapkan) {
                 $bulanBerkenaan = $t->strukturYuran->bulan_berkenaan;
 
                 if ($bulanBerkenaan !== null) {
+                    // $sejakDitetapkan: abaikan bulan sebelum yuran ini ditetapkan
+                    // kepada pelajar (digunakan untuk tunggakan tahun lepas, supaya
+                    // pelajar baharu tidak dikira berhutang bulan sebelum mereka masuk).
+                    if ($sejakDitetapkan && $akhirBulan->lt($t->created_at)) {
+                        return false;
+                    }
+
                     // Perbandingan LONGGAR (bukan strict) — elak isu jenis data
                     // (cth: nilai tersimpan sebagai string "1" bukan int 1).
                     return in_array($bulan, $bulanBerkenaan);
@@ -192,6 +199,39 @@ class BakiBulananService
         }
 
         return $senarai;
+    }
+
+    /**
+     * Tahun yang yuran belum bayarnya dipaparkan dan boleh dibayar oleh penjaga:
+     * tunggakan tahun lepas dan tahun semasa.
+     *
+     * @return array<int, int>
+     */
+    public function tahunBolehBayar(): array
+    {
+        return [now()->year - 1, now()->year];
+    }
+
+    /**
+     * @return array<int, array> prafetch() bagi setiap tahun boleh bayar
+     */
+    public function prafetchTahunBolehBayar(Collection $pelajarId): array
+    {
+        return collect($this->tahunBolehBayar())->mapWithKeys(fn ($tahun) => [$tahun => $this->prafetch($pelajarId, $tahun)])->all();
+    }
+
+    /**
+     * Bulan yang masih ada baki bagi tahun-tahun boleh bayar (tahun lepas dahulu).
+     * Tahun lepas hanya mengira bulan sejak yuran ditetapkan kepada pelajar.
+     *
+     * @param  array<int, array>|null  $prafetchMengikutTahun  hasil prafetchTahunBolehBayar()
+     */
+    public function bulanBelumBayar(Pelajar $pelajar, ?array $prafetchMengikutTahun = null): Collection
+    {
+        return collect($this->tahunBolehBayar())
+            ->flatMap(fn ($tahun) => $this->senaraiBulan($pelajar, $tahun, $prafetchMengikutTahun[$tahun] ?? null, $tahun < now()->year))
+            ->filter(fn ($b) => $b['baki'] > 0)
+            ->values();
     }
 
     /**

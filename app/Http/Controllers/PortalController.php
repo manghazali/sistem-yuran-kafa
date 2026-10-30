@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bayaran;
-use App\Models\Pelajar;
 use App\Models\PaymentGatewayTransaksi;
+use App\Models\Pelajar;
 use App\Services\BakiBulananService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PortalController extends Controller
 {
-    public function __construct(protected BakiBulananService $bakiService)
-    {
-    }
+    public function __construct(protected BakiBulananService $bakiService) {}
 
     protected function penjagaSemasa()
     {
@@ -31,13 +29,12 @@ class PortalController extends Controller
         $penjaga = $this->penjagaSemasa();
         $anak = $penjaga->anak()->with('kelas')->get();
 
-        $prafetchBaki = $this->bakiService->prafetch($anak->pluck('id'), now()->year);
+        $prafetchBaki = $this->bakiService->prafetchTahunBolehBayar($anak->pluck('id'));
 
         $ringkasan = $anak->map(function ($pelajar) use ($prafetchBaki) {
-            // Semua bulan yang belum dibayar (bukan setakat bulan semasa) — termasuk
-            // yuran bulan hadapan yang belum tiba tarikh, bukan sekadar yang tertunggak.
-            $bulanBelumDibayar = $this->bakiService->senaraiBulan($pelajar, now()->year, $prafetchBaki)
-                ->filter(fn ($b) => $b['baki'] > 0);
+            // Semua bulan yang belum dibayar — tunggakan tahun lepas dan semua bulan
+            // tahun semasa, termasuk yuran bulan hadapan yang belum tiba tarikh.
+            $bulanBelumDibayar = $this->bakiService->bulanBelumBayar($pelajar, $prafetchBaki);
 
             return [
                 'pelajar' => $pelajar,
