@@ -19,7 +19,7 @@ class PenjagaImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithHead
 
     public int $bilangBerjaya = 0;
 
-    public int $bilangAkaunDicipta = 0;
+    public int $bilangEmelMenunggu = 0;
 
     /** @var array<int, string> */
     public array $dilangkau = [];
@@ -64,9 +64,9 @@ class PenjagaImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithHead
 
         $this->bilangBerjaya++;
 
+        // Akaun dan emel log masuk dihantar kemudian melalui butang "Hantar Emel Akaun".
         if ($email) {
-            $penjaga->ciptaAtauResetAkaun($email);
-            $this->bilangAkaunDicipta++;
+            $this->bilangEmelMenunggu++;
         }
 
         return null;

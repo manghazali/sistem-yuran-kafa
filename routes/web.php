@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/guru-import', [GuruController::class, 'import'])->name('guru.import');
         Route::post('/guru-import', [GuruController::class, 'importStore'])->name('guru.import.store');
         Route::get('/guru-import/template', [GuruController::class, 'importTemplate'])->name('guru.import.template');
+        Route::post('/guru-hantar-emel-akaun', [GuruController::class, 'hantarEmelAkaun'])->name('guru.hantar-emel-akaun');
     });
     Route::resource('guru', GuruController::class)->middleware('role:Admin');
     Route::post('/guru/{guru}/akaun', [GuruAkaunController::class, 'store'])->middleware('role:Admin')->name('guru.akaun.store');
@@ -58,6 +59,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/penjaga-import', [PenjagaController::class, 'import'])->name('penjaga.import');
         Route::post('/penjaga-import', [PenjagaController::class, 'importStore'])->name('penjaga.import.store');
         Route::get('/penjaga-import/template', [PenjagaController::class, 'importTemplate'])->name('penjaga.import.template');
+        Route::post('/penjaga-hantar-emel-akaun', [PenjagaController::class, 'hantarEmelAkaun'])->name('penjaga.hantar-emel-akaun');
     });
     Route::resource('penjaga', PenjagaController::class)->middleware('role:Admin');
 

@@ -19,7 +19,7 @@ class GuruImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithHeading
 
     public int $bilangBerjaya = 0;
 
-    public int $bilangAkaunDicipta = 0;
+    public int $bilangEmelMenunggu = 0;
 
     /** @var array<int, string> */
     public array $dilangkau = [];
@@ -52,14 +52,15 @@ class GuruImport implements SkipsEmptyRows, SkipsOnFailure, ToModel, WithHeading
             'no_pekerja' => $noPekerja,
             'no_kp' => $this->kosongKeNull($row['no_kp'] ?? null),
             'no_telefon' => $this->kosongKeNull($row['no_telefon'] ?? null),
+            'email' => $email,
             'status' => $this->uraiStatus($row['status'] ?? null),
         ]);
 
         $this->bilangBerjaya++;
 
+        // Akaun dan emel log masuk dihantar kemudian melalui butang "Hantar Emel Akaun".
         if ($email) {
-            $guru->ciptaAtauResetAkaun($email);
-            $this->bilangAkaunDicipta++;
+            $this->bilangEmelMenunggu++;
         }
 
         return null;

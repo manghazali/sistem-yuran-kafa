@@ -67,6 +67,7 @@ class PenggunaController extends Controller
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($kataLaluan),
+            'wajib_tukar_kata_laluan' => true,
             'phone' => $validated['phone'] ?? null,
             'ic_number' => $validated['ic_number'] ?? null,
             'is_active' => true,
@@ -149,7 +150,7 @@ class PenggunaController extends Controller
 
         $kataLaluanBaharu = Str::password(10);
 
-        $pengguna->update(['password' => Hash::make($kataLaluanBaharu)]);
+        $pengguna->update(['password' => Hash::make($kataLaluanBaharu), 'wajib_tukar_kata_laluan' => true]);
         $pengguna->notify(new PenggunaAkaunNotification($pengguna, $kataLaluanBaharu));
 
         return view('pengguna.berjaya', [

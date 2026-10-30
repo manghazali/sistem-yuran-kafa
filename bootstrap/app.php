@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\RedirectIfNotRole;
+use App\Http\Middleware\WajibTukarKataLaluan;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Percayai semua proksi (Sail nginx, terowong Cloudflare/ngrok, dll) supaya
         // Laravel hormati header X-Forwarded-Proto dan jana URL https:// yang betul.
         $middleware->trustProxies(at: '*');
+        $middleware->web(append: [
+            WajibTukarKataLaluan::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

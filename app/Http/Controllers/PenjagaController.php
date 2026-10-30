@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Exports\PenjagaTemplateExport;
 use App\Imports\PenjagaImport;
+use App\Jobs\HantarEmelAkaunPukal;
 use App\Models\Penjaga;
+use App\Services\StatusEmelAkaun;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -27,7 +29,10 @@ class PenjagaController extends Controller
 
         $penjaga = $query->orderBy($urut, $arah)->paginate(10)->withQueryString();
 
-        return view('penjaga.index', compact('penjaga', 'urut', 'arah'));
+        $bilanganEmelMenunggu = HantarEmelAkaunPukal::bilanganMenunggu('penjaga');
+        $statusEmel = StatusEmelAkaun::untuk($penjaga->getCollection()->load('user'), 'penjaga');
+
+        return view('penjaga.index', compact('bilanganEmelMenunggu', 'statusEmel', 'penjaga', 'urut', 'arah'));
     }
 
     public function create()
@@ -108,7 +113,7 @@ class PenjagaController extends Controller
 
         $ringkasan = [
             'berjaya' => $import->bilangBerjaya,
-            'akaunDicipta' => $import->bilangAkaunDicipta,
+            'emelMenunggu' => $import->bilangEmelMenunggu,
             'dilangkau' => $import->dilangkau,
             'gagal' => $import->failures()
                 ->map(fn ($failure) => "Baris {$failure->row()}: ".implode(', ', $failure->errors()))
@@ -117,6 +122,35 @@ class PenjagaController extends Controller
 
         return redirect()->route('penjaga.import')
             ->with('importRingkasan', $ringkasan);
+    }
+
+    /**
+     * Cipta akaun dan hantar emel log masuk. Tanpa ids: semua penjaga yang ada emel
+     * tetapi belum ada akaun. Dengan ids (dipilih atau satu baris): hanya mereka —
+     * yang sudah ada akaun menerima kata laluan baharu. Dijalankan di latar
+     * belakang; emel dihantar berperingkat mengikut EMEL_HAD_HARIAN.
+     */
+    public function hantarEmelAkaun(Request $request)
+    {
+        $request->validate(['ids' => ['nullable', 'array'], 'ids.*' => ['integer']]);
+        $id = $request->filled('ids') ? array_map('intval', $request->input('ids')) : null;
+
+        $bilangan = $id === null
+            ? HantarEmelAkaunPukal::bilanganMenunggu('penjaga')
+            : HantarEmelAkaunPukal::sasaran('penjaga', $id)->count();
+
+        if ($bilangan === 0) {
+            return redirect()->back()->with('status', $id === null
+                ? 'Tiada penjaga yang menunggu emel akaun.'
+                : 'Tiada penjaga dipilih yang mempunyai emel.');
+        }
+
+        HantarEmelAkaunPukal::dispatch('penjaga', $id);
+        $hari = (int) ceil($bilangan / max(1, config('kafa.emel_had_harian')));
+
+        return redirect()->back()->with('status', $hari > 1
+            ? "Emel log masuk sedang disediakan untuk {$bilangan} penjaga, dihantar berperingkat — dijangka siap dalam {$hari} hari."
+            : "Emel log masuk sedang dihantar kepada {$bilangan} penjaga. Status dikemas kini sebaik emel keluar.");
     }
 
     public function importTemplate()

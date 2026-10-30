@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasRoles, Notifiable;
 
     protected $guard_name = 'web';
 
@@ -21,6 +24,7 @@ class User extends Authenticatable
         'phone',
         'ic_number',
         'is_active',
+        'wajib_tukar_kata_laluan',
     ];
 
     protected $hidden = [
@@ -34,6 +38,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'wajib_tukar_kata_laluan' => 'boolean',
         ];
     }
 
@@ -44,7 +49,7 @@ class User extends Authenticatable
      */
     public function sendPasswordResetNotification($token): void
     {
-        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+        $this->notify(new ResetPasswordNotification($token));
     }
 
     /**
@@ -60,11 +65,12 @@ class User extends Authenticatable
             default => 'dashboard',
         };
     }
+
     /**
      * Mendapatkan hubungan dengan model Penjaga.
      */
-    public function penjaga(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function penjaga(): HasOne
     {
-        return $this->hasOne(\App\Models\Penjaga::class, 'user_id');
+        return $this->hasOne(Penjaga::class, 'user_id');
     }
 }

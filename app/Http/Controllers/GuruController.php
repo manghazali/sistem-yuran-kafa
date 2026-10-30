@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Exports\GuruTemplateExport;
 use App\Imports\GuruImport;
+use App\Jobs\HantarEmelAkaunPukal;
 use App\Models\Guru;
 use App\Models\GuruKelas;
 use App\Models\Kelas;
+use App\Services\StatusEmelAkaun;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -18,7 +20,10 @@ class GuruController extends Controller
 
         $guru = Guru::with(['user', 'guruKelas.kelas'])->orderBy($urut, $arah)->paginate(10)->withQueryString();
 
-        return view('guru.index', compact('guru', 'urut', 'arah'));
+        $bilanganEmelMenunggu = HantarEmelAkaunPukal::bilanganMenunggu('guru');
+        $statusEmel = StatusEmelAkaun::untuk($guru->getCollection()->load('user'), 'guru');
+
+        return view('guru.index', compact('bilanganEmelMenunggu', 'statusEmel', 'guru', 'urut', 'arah'));
     }
 
     public function create()
@@ -115,7 +120,7 @@ class GuruController extends Controller
 
         $ringkasan = [
             'berjaya' => $import->bilangBerjaya,
-            'akaunDicipta' => $import->bilangAkaunDicipta,
+            'emelMenunggu' => $import->bilangEmelMenunggu,
             'dilangkau' => $import->dilangkau,
             'gagal' => $import->failures()
                 ->map(fn ($failure) => "Baris {$failure->row()}: ".implode(', ', $failure->errors()))
@@ -124,6 +129,35 @@ class GuruController extends Controller
 
         return redirect()->route('guru.import')
             ->with('importRingkasan', $ringkasan);
+    }
+
+    /**
+     * Cipta akaun dan hantar emel log masuk. Tanpa ids: semua guru yang ada emel
+     * tetapi belum ada akaun. Dengan ids (dipilih atau satu baris): hanya mereka —
+     * yang sudah ada akaun menerima kata laluan baharu. Dijalankan di latar
+     * belakang; emel dihantar berperingkat mengikut EMEL_HAD_HARIAN.
+     */
+    public function hantarEmelAkaun(Request $request)
+    {
+        $request->validate(['ids' => ['nullable', 'array'], 'ids.*' => ['integer']]);
+        $id = $request->filled('ids') ? array_map('intval', $request->input('ids')) : null;
+
+        $bilangan = $id === null
+            ? HantarEmelAkaunPukal::bilanganMenunggu('guru')
+            : HantarEmelAkaunPukal::sasaran('guru', $id)->count();
+
+        if ($bilangan === 0) {
+            return redirect()->back()->with('status', $id === null
+                ? 'Tiada guru yang menunggu emel akaun.'
+                : 'Tiada guru dipilih yang mempunyai emel.');
+        }
+
+        HantarEmelAkaunPukal::dispatch('guru', $id);
+        $hari = (int) ceil($bilangan / max(1, config('kafa.emel_had_harian')));
+
+        return redirect()->back()->with('status', $hari > 1
+            ? "Emel log masuk sedang disediakan untuk {$bilangan} guru, dihantar berperingkat — dijangka siap dalam {$hari} hari."
+            : "Emel log masuk sedang dihantar kepada {$bilangan} guru. Status dikemas kini sebaik emel keluar.");
     }
 
     public function importTemplate()

@@ -11,8 +11,8 @@
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 space-y-3">
                     <h3 class="font-semibold text-gray-800">{{ __('Keputusan Import') }}</h3>
                     <p class="text-sm text-green-700">{{ $ringkasan['berjaya'] }} {{ __('guru berjaya diimport.') }}</p>
-                    @if ($ringkasan['akaunDicipta'])
-                        <p class="text-sm text-blue-700">{{ $ringkasan['akaunDicipta'] }} {{ __('akaun log masuk dicipta & emel dihantar automatik.') }}</p>
+                    @if ($ringkasan['emelMenunggu'] ?? 0)
+                        <p class="text-sm text-blue-700">{{ $ringkasan['emelMenunggu'] }} {{ __('guru ada emel tetapi belum dihantar emel log masuk. Tekan "Hantar Emel Akaun" di senarai guru apabila sedia.') }}</p>
                     @endif
 
                     @if (count($ringkasan['dilangkau']))
@@ -43,7 +43,7 @@
                 <div class="text-sm text-gray-600 space-y-2">
                     <p>{{ __('Muat naik fail Excel (.xlsx/.xls) atau CSV yang mengandungi senarai guru. Baris pertama mestilah nama lajur.') }}</p>
                     <p>{{ __('Lajur yang diperlukan:') }} <strong>Nama</strong>. {{ __('Lajur pilihan:') }} <strong>No Pekerja, No KP, No Telefon, Emel, Status</strong>.</p>
-                    <p>{{ __('Jika lajur Emel diisi, akaun log masuk (peranan Guru) akan dicipta serta-merta dan emel kata laluan sementara akan dihantar automatik.') }}</p>
+                    <p>{{ __('Emel hanya disimpan semasa import — tiada emel dihantar. Apabila sedia, hantar emel log masuk melalui butang "Hantar Emel Akaun" di senarai guru (semua, yang dipilih, atau seorang demi seorang).') }}</p>
                     <p>{{ __('No. Pekerja yang sudah wujud dalam sistem akan dilangkau secara automatik.') }}</p>
                     <a href="{{ route('guru.import.template') }}" class="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
                         <i class="fas fa-download"></i> {{ __('Muat turun templat Excel') }}
