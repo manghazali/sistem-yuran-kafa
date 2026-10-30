@@ -7,13 +7,12 @@ use App\Models\Pelajar;
 use App\Services\BakiBulananService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BakiTertunggakController extends Controller
 {
-    public function __construct(protected BakiBulananService $bakiService)
-    {
-    }
+    public function __construct(protected BakiBulananService $bakiService) {}
 
     public function index(Request $request)
     {
@@ -79,7 +78,7 @@ class BakiTertunggakController extends Controller
      * (jika ada) dan diurutkan — dikongsi antara paparan jadual dan muat
      * turun CSV supaya kedua-duanya sentiasa konsisten.
      *
-     * @return array{0: \Illuminate\Support\Collection, 1: string, 2: string}
+     * @return array{0: Collection, 1: string, 2: string}
      */
     protected function senaraiTertapis(Request $request): array
     {
@@ -95,13 +94,10 @@ class BakiTertunggakController extends Controller
 
         $senaraiPelajar = $query->orderBy('nama')->get();
 
-        // Semua bulan yang belum dibayar sepanjang tahun (bukan setakat bulan
-        // semasa) — supaya "Baki Belum Dibayar" turut merangkumi yuran bulan
-        // hadapan yang belum tiba, bukan sekadar yang telah lepas tempoh.
+        // Semua bulan yang belum dibayar — tunggakan tahun lepas dan sepanjang
+        // tahun semasa (termasuk yuran bulan hadapan yang belum tiba).
         $mengikutPelajar = $senaraiPelajar->map(function ($pelajar) {
-            $bulanBelumDibayar = $this->bakiService->senaraiBulan($pelajar, now()->year)
-                ->filter(fn ($b) => $b['baki'] > 0)
-                ->values();
+            $bulanBelumDibayar = $this->bakiService->bulanBelumBayar($pelajar);
 
             // Senarai nama yuran yang tertunggak (per item, bukan sekadar
             // bulan) — supaya laporan ini terus tunjuk YURAN mana yang

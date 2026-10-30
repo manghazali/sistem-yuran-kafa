@@ -76,11 +76,27 @@ class PaymentGatewayController extends Controller
             ->where('order_id', $request->input('order_id'))
             ->first();
 
+        // Hanya penjaga pemilik transaksi (atau Admin/Akauntan) boleh melihatnya.
+        $user = $request->user();
+        $milikSendiri = $transaksi && $transaksi->itemBayaran
+            ->contains(fn ($item) => $item->pelajar && $user->penjaga && $item->pelajar->penjaga_id === $user->penjaga->id);
+
+        if ($transaksi && ! $milikSendiri && ! $user->hasAnyRole(['Admin', 'Akauntan'])) {
+            $transaksi = null;
+        }
+
         // Satu Bayaran (resit) dicipta bagi setiap anak dalam transaksi yang berjaya.
         $senaraiBayaran = $transaksi && $transaksi->status === 'Berjaya'
             ? Bayaran::with('pelajar')->where('no_pesanan_gateway', $transaksi->order_id)->get()
             : collect();
 
-        return view('payment-gateway.selesai', compact('transaksi', 'senaraiBayaran'));
+        // Semasa menunggu pengesahan DOKU, halaman dimuat semula sendiri setiap 5 saat
+        // selama kira-kira seminit.
+        $cubaan = min((int) $request->query('cuba', 0), 12);
+        $muatSemula = $transaksi && $transaksi->status === 'Menunggu' && $cubaan < 12
+            ? route('payment-gateway.selesai', ['order_id' => $transaksi->order_id, 'cuba' => $cubaan + 1])
+            : null;
+
+        return view('payment-gateway.selesai', compact('transaksi', 'senaraiBayaran', 'muatSemula'));
     }
 }

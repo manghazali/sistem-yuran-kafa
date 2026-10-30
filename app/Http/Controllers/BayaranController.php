@@ -9,12 +9,11 @@ use App\Models\PermohonanBayaran;
 use App\Services\BakiBulananService;
 use App\Services\NotifikasiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 
 class BayaranController extends Controller
 {
-    public function __construct(protected BakiBulananService $bakiService, protected NotifikasiService $notifikasi)
-    {
-    }
+    public function __construct(protected BakiBulananService $bakiService, protected NotifikasiService $notifikasi) {}
 
     public function index(Request $request)
     {
@@ -67,12 +66,14 @@ class BayaranController extends Controller
                 // Admin/Akauntan boleh terus pilih yuran yang tepat — sama
                 // konsep dengan dropdown Struktur Yuran di borang Laporkan
                 // Bayaran Diterima (guru).
-                $senaraiItemTertunggak = $this->bakiService->senaraiBulan($pelajarDipilih, now()->year)
+                // Termasuk tunggakan tahun lepas (BakiBulananService::tahunBolehBayar()).
+                $senaraiItemTertunggak = $this->bakiService->bulanBelumBayar($pelajarDipilih)
                     ->flatMap(fn ($bulanData) => collect($bulanData['butiran'])->map(fn ($butiran) => [
                         'struktur_yuran_id' => $butiran['struktur_yuran_id'],
                         'bulan' => $bulanData['bulan'],
                         'tahun' => $bulanData['tahun'],
-                        'nama' => $butiran['nama'],
+                        // Yuran sekali bayar tahun lepas: nyatakan tahun (yuran bulanan sudah ada tahun pada nama).
+                        'nama' => $butiran['nama'].(! $butiran['berulang'] && $bulanData['tahun'] < now()->year ? ' ('.$bulanData['tahun'].')' : ''),
                         'baki' => $butiran['baki'],
                     ]))
                     ->filter(fn ($i) => $i['baki'] > 0)
@@ -109,7 +110,7 @@ class BayaranController extends Controller
 
         $keterangan = $validated['keterangan']
             ?? (($validated['bulan'] ?? null) && ($validated['tahun'] ?? null)
-                ? 'Yuran Bulanan - '.\Illuminate\Support\Carbon::create($validated['tahun'], $validated['bulan'], 1)->translatedFormat('F Y')
+                ? 'Yuran Bulanan - '.Carbon::create($validated['tahun'], $validated['bulan'], 1)->translatedFormat('F Y')
                 : 'Bayaran Yuran');
 
         $bayaran = Bayaran::create([
@@ -143,7 +144,7 @@ class BayaranController extends Controller
                     $this->notifikasi->hantar(
                         $permohonan->guru->user_id,
                         'Permohonan Bayaran Disahkan',
-                        "Permohonan bayaran RM".number_format($permohonan->amaun, 2)." bagi {$bayaran->pelajar->nama} telah disahkan dan direkodkan rasmi.",
+                        'Permohonan bayaran RM'.number_format($permohonan->amaun, 2)." bagi {$bayaran->pelajar->nama} telah disahkan dan direkodkan rasmi.",
                         route('permohonan-bayaran.index')
                     );
                 }

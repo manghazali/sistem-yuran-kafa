@@ -10,16 +10,16 @@ use App\Http\Controllers\KelasController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\LogAuditController;
 use App\Http\Controllers\LogEmelController;
+use App\Http\Controllers\NaikDarjahController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PelajarController;
+use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\PenjagaAkaunController;
 use App\Http\Controllers\PenjagaController;
 use App\Http\Controllers\PermohonanBayaranController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\PortalKalendarController;
-use App\Http\Controllers\NaikDarjahController;
-use App\Http\Controllers\PenggunaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResitController;
 use App\Http\Controllers\StrukturYuranController;
@@ -104,7 +104,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/permohonan-bayaran', [PermohonanBayaranController::class, 'store'])->middleware('role:Guru')->name('permohonan-bayaran.store');
     Route::post('/permohonan-bayaran/{permohonanBayaran}/tolak', [PermohonanBayaranController::class, 'tolak'])->middleware('role:Admin,Akauntan')->name('permohonan-bayaran.tolak');
     Route::post('/penjaga/{penjaga}/akaun', [PenjagaAkaunController::class, 'store'])->middleware('role:Admin')->name('penjaga.akaun.store');
-    
+
     Route::prefix('portal')->middleware('role:Penjaga')->group(function () {
         Route::get('/', [PortalController::class, 'index'])->name('portal.index');
 
@@ -154,7 +154,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/tetapan/emel-templat/{templat}', [TetapanController::class, 'kemaskiniEmelTemplat'])->middleware('role:Admin')->name('tetapan.emel-templat.update');
 });
 
-Route::get('/payment-gateway/selesai', [PaymentGatewayController::class, 'selesai'])->name('payment-gateway.selesai');
+// Perlu log masuk: halaman ini memaparkan nama anak, amaun dan pautan resit.
+Route::get('/payment-gateway/selesai', [PaymentGatewayController::class, 'selesai'])->middleware('auth')->name('payment-gateway.selesai');
 Route::match(['get', 'post'], '/payment-gateway/callback', [PaymentGatewayController::class, 'callback'])->name('payment-gateway.callback');
 
 require __DIR__.'/auth.php';

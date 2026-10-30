@@ -22,12 +22,17 @@
                     <div class="text-red-600">
                         <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         <p class="text-lg font-semibold">Bayaran Tidak Berjaya</p>
-                        <p class="text-sm text-gray-500 mt-2">{{ $transaksi->msg ?? 'Sila cuba lagi atau hubungi pihak sekolah.' }}</p>
+                        <p class="text-sm text-gray-500 mt-2">Bayaran tidak diterima. Jika wang telah ditolak daripada akaun anda, ia akan dipulangkan oleh bank anda. Anda boleh cuba bayar semula.</p>
                     </div>
                 @else
                     <div class="text-yellow-600">
                         <p class="text-lg font-semibold">Sedang Memproses...</p>
-                        <p class="text-sm text-gray-500 mt-2">Status bayaran anda sedang disahkan. Sila semak semula sebentar lagi.</p>
+                        @if ($muatSemula)
+                            <p class="text-sm text-gray-500 mt-2">Status bayaran anda sedang disahkan. Halaman ini akan dikemas kini sendiri — jangan bayar semula.</p>
+                            <script>setTimeout(() => window.location.replace(@json($muatSemula)), 5000);</script>
+                        @else
+                            <p class="text-sm text-gray-500 mt-2">Pengesahan mengambil masa lebih lama daripada biasa. Resit akan muncul di tab Bayaran sebaik sahaja bayaran disahkan — jangan bayar semula.</p>
+                        @endif
                     </div>
                 @endif
 
